@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestore Spese Personali</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Gestore Spese</h1>
+      <p class="subtitle">Il tuo primo progetto con l'Intelligenza Artificiale</p>
+    </header>
+
+    <!-- Sezione Riepilogo / Totali -->
+    <section class="summary-cards">
+      <div class="card card-total">
+        <span class="label" id="total-label">Totale Speso</span>
+        <span class="amount" id="total-amount">€ 0.00</span>
+      </div>
+      <div class="card card-count">
+        <span class="label">Numero Spese</span>
+        <span class="amount" id="total-count">0</span>
+      </div>
+    </section>
+
+    <!-- Modulo per inserire una nuova spesa -->
+    <section class="form-section">
+      <h2>Aggiungi una Spesa</h2>
+
+      <!-- Scorciatoie acquisti frequenti (clicca per compilare subito) -->
+      <div class="quick-tags-container">
+        <span class="quick-tags-label">⚡ Acquisti frequenti (clicca per inserire):</span>
+        <div id="quick-tags" class="quick-tags">
+          <!-- Popolato dinamicamente da JavaScript -->
+        </div>
+      </div>
+
+      <form id="expense-form">
+        <div class="form-group">
+          <label for="description">Descrizione</label>
+          <input type="text" id="description" placeholder="Es. Spesa al supermercato" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="amount">Importo (€)</label>
+            <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="form-group">
+            <label for="category">Categoria</label>
+            <select id="category" required>
+              <option value="Alimentari">🛒 Alimentari</option>
+              <option value="Trasporti">🚗 Trasporti</option>
+              <option value="Svago">🍿 Svago</option>
+              <option value="Casa">🏠 Casa</option>
+              <option value="Altro">✨ Altro</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Aggiungi Spesa</button>
+      </form>
+    </section>
+
+    <!-- Elenco delle spese registrate con Filtro -->
+    <section class="list-section">
+      <div class="list-header">
+        <h2>Cronologia Spese</h2>
+        <div class="list-controls">
+          <!-- Filtro per categoria -->
+          <select id="filter-category" class="filter-select" title="Filtra per categoria">
+            <option value="ALL">🔍 Tutte le categorie</option>
+            <option value="Alimentari">🛒 Alimentari</option>
+            <option value="Trasporti">🚗 Trasporti</option>
+            <option value="Svago">🍿 Svago</option>
+            <option value="Casa">🏠 Casa</option>
+            <option value="Altro">✨ Altro</option>
+          </select>
+          <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
+        </div>
+      </div>
+
+      <ul id="expense-list" class="expense-list">
+        <!-- Elementi inseriti dinamicamente da JavaScript -->
+      </ul>
+
+      <div id="empty-state" class="empty-state">
+        <p id="empty-state-text">Nessuna spesa registrata. Aggiungine una dal modulo sopra!</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
