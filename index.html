@@ -10,7 +10,7 @@
   <div class="container">
     <header>
       <h1>Gestore Spese</h1>
-      <p class="subtitle">Il tuo primo progetto con l'Intelligenza Artificiale</p>
+      <p class="subtitle">Il tuo assistente personale per le spese quotidiane</p>
     </header>
 
     <!-- Sezione Riepilogo / Totali -->
@@ -29,18 +29,31 @@
     <section class="form-section">
       <h2>Aggiungi una Spesa</h2>
 
-      <!-- Scorciatoie acquisti frequenti (clicca per compilare subito) -->
-      <div class="quick-tags-container">
-        <span class="quick-tags-label">⚡ Acquisti frequenti (clicca per inserire):</span>
-        <div id="quick-tags" class="quick-tags">
+      <!-- Elenco a discesa degli acquisti frequenti (senza prezzo prefissato) -->
+      <div class="form-group quick-select-group">
+        <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
+        <select id="quick-select">
+          <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
           <!-- Popolato dinamicamente da JavaScript -->
-        </div>
+        </select>
       </div>
 
       <form id="expense-form">
         <div class="form-group">
-          <label for="description">Descrizione</label>
-          <input type="text" id="description" placeholder="Es. Spesa al supermercato" required>
+          <label for="description">Descrizione articolo</label>
+          <input type="text" id="description" placeholder="Es. Pane, Pasta, Caffè..." required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantity">Quantità</label>
+            <input type="number" id="quantity" min="1" step="1" value="1" required>
+          </div>
+
+          <div class="form-group">
+            <label for="store">Negozio / Fornitore</label>
+            <input type="text" id="store" placeholder="Es. Conad, Bar, Coop, Farmacia...">
+          </div>
         </div>
 
         <div class="form-row">

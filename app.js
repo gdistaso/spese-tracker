@@ -2,25 +2,32 @@
 // 1. STATO DELL'APPLICAZIONE (I dati del programma)
 // ==============================================================================
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-let currentFilter = "ALL"; // Memorizza la categoria attualmente filtrata ("ALL" o specifica)
+let currentFilter = "ALL";
 
-// Lista predefinita delle spese più frequenti (Scorciatoie)
-const QUICK_EXPENSES = [
-  { desc: "Pane fresco", amount: 1.50, cat: "Alimentari", icon: "🥖" },
-  { desc: "Pasta", amount: 1.20, cat: "Alimentari", icon: "🍝" },
-  { desc: "Frutta e Verdura", amount: 4.00, cat: "Alimentari", icon: "🍎" },
-  { desc: "Latte e Uova", amount: 2.80, cat: "Alimentari", icon: "🥛" },
-  { desc: "Caffè al bar", amount: 1.20, cat: "Svago", icon: "☕" },
-  { desc: "Biglietto Bus / Metro", amount: 1.70, cat: "Trasporti", icon: "🚌" },
-  { desc: "Rifornimento Benzina", amount: 25.00, cat: "Trasporti", icon: "⛽" },
-  { desc: "Pizza", amount: 8.50, cat: "Svago", icon: "🍕" },
+// Lista iniziale degli acquisti frequenti (SENZA PREZZI PREFISSATI)
+const DEFAULT_FREQUENT_ITEMS = [
+  { desc: "Pane", cat: "Alimentari", store: "Panetteria" },
+  { desc: "Pasta", cat: "Alimentari", store: "Supermercato" },
+  { desc: "Frutta e Verdura", cat: "Alimentari", store: "Fruttivendolo" },
+  { desc: "Latte e Uova", cat: "Alimentari", store: "Supermercato" },
+  { desc: "Caffè al bar", cat: "Svago", store: "Bar" },
+  { desc: "Pizza", cat: "Svago", store: "Pizzeria" },
+  { desc: "Biglietto Bus / Metro", cat: "Trasporti", store: "Tabacchi" },
+  { desc: "Carburante", cat: "Trasporti", store: "Distributore" },
+  { desc: "Farmaci", cat: "Altro", store: "Farmacia" },
 ];
+
+// Recuperiamo la lista degli acquisti frequenti salvata o usiamo quella di default
+let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
 
 // ==============================================================================
 // 2. SELEZIONE DEGLI ELEMENTI HTML
 // ==============================================================================
 const form = document.getElementById("expense-form");
+const quickSelect = document.getElementById("quick-select");
 const descriptionInput = document.getElementById("description");
+const quantityInput = document.getElementById("quantity");
+const storeInput = document.getElementById("store");
 const amountInput = document.getElementById("amount");
 const categorySelect = document.getElementById("category");
 const expenseList = document.getElementById("expense-list");
@@ -30,68 +37,71 @@ const totalLabelElement = document.getElementById("total-label");
 const emptyStateElement = document.getElementById("empty-state");
 const emptyStateText = document.getElementById("empty-state-text");
 const clearAllBtn = document.getElementById("clear-all-btn");
-const quickTagsContainer = document.getElementById("quick-tags");
 const filterCategorySelect = document.getElementById("filter-category");
 
 // ==============================================================================
-// 3. GENERAZIONE SCORCIATOIE FREQUENTI
+// 3. GESTIONE ELENCO A DISCESA ACQUISTI FREQUENTI
 // ==============================================================================
-// Questa funzione crea i bottoni per ogni spesa frequente
-function renderQuickTags() {
-  quickTagsContainer.innerHTML = "";
+function renderFrequentDropdown() {
+  quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
 
-  QUICK_EXPENSES.forEach((item) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "quick-tag-btn";
-    btn.innerHTML = `${item.icon} ${item.desc} <strong>€${item.amount.toFixed(2)}</strong>`;
-
-    // Cliccando sulla scorciatoia, compiliamo automaticamente i campi del form!
-    btn.addEventListener("click", () => {
-      descriptionInput.value = item.desc;
-      amountInput.value = item.amount;
-      categorySelect.value = item.cat;
-
-      // Sposta il cursore direttamente sull'importo se vuoi modificarlo prima di salvare
-      amountInput.focus();
-      amountInput.select();
-    });
-
-    quickTagsContainer.appendChild(btn);
+  frequentItems.forEach((item, index) => {
+    const opt = document.createElement("option");
+    opt.value = index;
+    const storeInfo = item.store ? ` (${item.store})` : "";
+    opt.textContent = `${item.desc}${storeInfo} [${item.cat}]`;
+    quickSelect.appendChild(opt);
   });
 }
 
+function saveFrequentItems() {
+  localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
+}
+
+// Quando l'utente seleziona una voce dall'elenco a discesa:
+quickSelect.addEventListener("change", function () {
+  const selectedIndex = this.value;
+  if (selectedIndex === "") {
+    return;
+  }
+
+  const selectedItem = frequentItems[selectedIndex];
+  if (selectedItem) {
+    // Compila automaticamente descrizione, categoria e negozio
+    descriptionInput.value = selectedItem.desc;
+    categorySelect.value = selectedItem.cat;
+    storeInput.value = selectedItem.store || "";
+    quantityInput.value = 1;
+
+    // Lascia vuoto l'importo e posiziona il cursore subito sul campo del prezzo!
+    amountInput.value = "";
+    amountInput.focus();
+  }
+});
+
 // ==============================================================================
-// 4. FUNZIONE DI SALVATAGGIO
+// 4. SALVATAGGIO SPESE NEL BROWSER
 // ==============================================================================
 function saveExpenses() {
   localStorage.setItem("expenses", JSON.stringify(expenses));
 }
 
 // ==============================================================================
-// 5. FUNZIONE DI VISUALIZZAZIONE E FILTRAGGIO (Rendering)
+// 5. VISUALIZZAZIONE DELLE SPESE (Rendering)
 // ==============================================================================
 function renderExpenses() {
   expenseList.innerHTML = "";
 
-  // 1. FILTRAGGIO: Selezioniamo solo le spese corrispondenti al filtro scelto
   const displayedExpenses = currentFilter === "ALL"
     ? expenses
     : expenses.filter((e) => e.category === currentFilter);
 
-  // 2. CALCOLO TOTALE: Sommiamo solo le spese visibili a schermo
   const total = displayedExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
-  // Aggiorniamo le etichette delle statistiche in alto
-  if (currentFilter === "ALL") {
-    totalLabelElement.textContent = "Totale Speso";
-  } else {
-    totalLabelElement.textContent = `Totale (${currentFilter})`;
-  }
+  totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Speso" : `Totale (${currentFilter})`;
   totalAmountElement.textContent = `€ ${total.toFixed(2)}`;
   totalCountElement.textContent = displayedExpenses.length;
 
-  // Gestione lista vuota
   if (displayedExpenses.length === 0) {
     emptyStateElement.style.display = "block";
     emptyStateText.textContent = currentFilter === "ALL"
@@ -103,15 +113,27 @@ function renderExpenses() {
     clearAllBtn.style.display = "inline-block";
   }
 
-  // 3. DISEGNO ELEMENTI: Creiamo la riga per ogni spesa filtrata
   displayedExpenses.forEach((expense) => {
     const li = document.createElement("li");
     li.className = "expense-item";
 
+    const qtyBadge = expense.quantity && expense.quantity > 1
+      ? `<span class="badge-qty">Qtà: ${expense.quantity}</span>`
+      : "";
+
+    const storeBadge = expense.store
+      ? `<span class="badge-store">🏬 ${expense.store}</span>`
+      : "";
+
     li.innerHTML = `
       <div class="expense-info">
         <span class="expense-desc">${expense.description}</span>
-        <span class="expense-meta">${expense.category} • ${expense.date}</span>
+        <div class="expense-meta">
+          <span class="badge-tag">${expense.category}</span>
+          ${storeBadge}
+          ${qtyBadge}
+          <span>📅 ${expense.date}</span>
+        </div>
       </div>
       <div class="expense-right">
         <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
@@ -124,20 +146,22 @@ function renderExpenses() {
 }
 
 // ==============================================================================
-// 6. EVENTO FILTRO PER CATEGORIA
+// 6. EVENTO FILTRO CATEGORIA
 // ==============================================================================
 filterCategorySelect.addEventListener("change", function (event) {
   currentFilter = event.target.value;
-  renderExpenses(); // Ridisegna la lista applicando il nuovo filtro
+  renderExpenses();
 });
 
 // ==============================================================================
-// 7. AGGIUNGERE UNA SPESA
+// 7. AGGIUNGERE UNA SPESA E AUTO-APPRENDIMENTO ACQUISTI FREQUENTI
 // ==============================================================================
 form.addEventListener("submit", function (event) {
   event.preventDefault();
 
   const description = descriptionInput.value.trim();
+  const quantity = parseInt(quantityInput.value, 10) || 1;
+  const store = storeInput.value.trim();
   const amount = parseFloat(amountInput.value);
   const category = categorySelect.value;
 
@@ -146,9 +170,28 @@ form.addEventListener("submit", function (event) {
     return;
   }
 
+  // AUTO-APPRENDIMENTO: Controlliamo se questa spesa è già nell'elenco a discesa
+  const alreadyExists = frequentItems.some(
+    (item) => item.desc.toLowerCase() === description.toLowerCase()
+  );
+
+  if (!alreadyExists) {
+    // Si inserisce automaticamente nell'elenco a discesa per le prossime volte!
+    frequentItems.push({
+      desc: description,
+      cat: category,
+      store: store,
+    });
+    saveFrequentItems();
+    renderFrequentDropdown();
+  }
+
+  // Creazione della nuova spesa registrata
   const newExpense = {
     id: Date.now(),
     description: description,
+    quantity: quantity,
+    store: store,
     amount: amount,
     category: category,
     date: new Date().toLocaleDateString("it-IT"),
@@ -160,6 +203,8 @@ form.addEventListener("submit", function (event) {
 
   // Reset del modulo
   form.reset();
+  quantityInput.value = 1;
+  quickSelect.value = "";
   descriptionInput.focus();
 });
 
@@ -186,5 +231,5 @@ clearAllBtn.addEventListener("click", function () {
 // ==============================================================================
 // 10. AVVIO INIZIALE
 // ==============================================================================
-renderQuickTags();
+renderFrequentDropdown();
 renderExpenses();
