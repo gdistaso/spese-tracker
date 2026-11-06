@@ -90,7 +90,7 @@ h2 {
   color: #1f2937;
 }
 
-/* Elenco a discesa acquisti frequenti */
+/* Elenco a discesa acquisti frequenti con pulsante elimina */
 .quick-select-group {
   margin-bottom: 16px;
   padding: 12px;
@@ -105,12 +105,46 @@ h2 {
   font-size: 0.85rem;
 }
 
-.quick-select-group select {
+.quick-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
   margin-top: 6px;
+}
+
+.quick-select-row select {
+  flex: 1;
   background-color: #ffffff;
   border-color: #93c5fd;
   font-weight: 500;
   color: #1e3a8a;
+}
+
+.btn-delete-frequent {
+  padding: 9px 12px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-frequent:hover:not(:disabled) {
+  background-color: #fecaca;
+  border-color: #f87171;
+  transform: scale(1.05);
+}
+
+.btn-delete-frequent:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
 }
 
 /* Form e Campi di input */

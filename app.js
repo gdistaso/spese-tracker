@@ -17,7 +17,6 @@ const DEFAULT_FREQUENT_ITEMS = [
   { desc: "Farmaci", cat: "Altro", store: "Farmacia" },
 ];
 
-// Recuperiamo la lista degli acquisti frequenti salvata o usiamo quella di default
 let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
 
 // ==============================================================================
@@ -25,6 +24,7 @@ let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAUL
 // ==============================================================================
 const form = document.getElementById("expense-form");
 const quickSelect = document.getElementById("quick-select");
+const deleteFrequentBtn = document.getElementById("delete-frequent-btn");
 const descriptionInput = document.getElementById("description");
 const quantityInput = document.getElementById("quantity");
 const storeInput = document.getElementById("store");
@@ -52,6 +52,9 @@ function renderFrequentDropdown() {
     opt.textContent = `${item.desc}${storeInfo} [${item.cat}]`;
     quickSelect.appendChild(opt);
   });
+
+  // Disabilita il pulsante elimina finché non viene selezionata una voce
+  deleteFrequentBtn.disabled = true;
 }
 
 function saveFrequentItems() {
@@ -61,13 +64,17 @@ function saveFrequentItems() {
 // Quando l'utente seleziona una voce dall'elenco a discesa:
 quickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
+
   if (selectedIndex === "") {
+    deleteFrequentBtn.disabled = true;
     return;
   }
 
+  // Abilita il pulsante cestino per poter eliminare la voce selezionata
+  deleteFrequentBtn.disabled = false;
+
   const selectedItem = frequentItems[selectedIndex];
   if (selectedItem) {
-    // Compila automaticamente descrizione, categoria e negozio
     descriptionInput.value = selectedItem.desc;
     categorySelect.value = selectedItem.cat;
     storeInput.value = selectedItem.store || "";
@@ -76,6 +83,32 @@ quickSelect.addEventListener("change", function () {
     // Lascia vuoto l'importo e posiziona il cursore subito sul campo del prezzo!
     amountInput.value = "";
     amountInput.focus();
+  }
+});
+
+// ELIMINARE UN ACQUISTO FREQUENTE DALL'ELENCO A DISCESA
+deleteFrequentBtn.addEventListener("click", function () {
+  const selectedIndex = quickSelect.value;
+  if (selectedIndex === "") return;
+
+  const itemToDelete = frequentItems[selectedIndex];
+  if (!itemToDelete) return;
+
+  const confermato = confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`);
+
+  if (confermato) {
+    // Rimuove l'elemento dall'array
+    frequentItems.splice(selectedIndex, 1);
+    saveFrequentItems();
+    renderFrequentDropdown();
+
+    // Se il modulo conteneva i dati dell'elemento appena rimosso, resettiamo i campi
+    if (descriptionInput.value === itemToDelete.desc) {
+      descriptionInput.value = "";
+      storeInput.value = "";
+      amountInput.value = "";
+      quantityInput.value = 1;
+    }
   }
 });
 
@@ -176,7 +209,6 @@ form.addEventListener("submit", function (event) {
   );
 
   if (!alreadyExists) {
-    // Si inserisce automaticamente nell'elenco a discesa per le prossime volte!
     frequentItems.push({
       desc: description,
       cat: category,
@@ -186,7 +218,6 @@ form.addEventListener("submit", function (event) {
     renderFrequentDropdown();
   }
 
-  // Creazione della nuova spesa registrata
   const newExpense = {
     id: Date.now(),
     description: description,
@@ -205,6 +236,7 @@ form.addEventListener("submit", function (event) {
   form.reset();
   quantityInput.value = 1;
   quickSelect.value = "";
+  deleteFrequentBtn.disabled = true;
   descriptionInput.focus();
 });
 

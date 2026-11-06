@@ -29,13 +29,16 @@
     <section class="form-section">
       <h2>Aggiungi una Spesa</h2>
 
-      <!-- Elenco a discesa degli acquisti frequenti (senza prezzo prefissato) -->
+      <!-- Elenco a discesa degli acquisti frequenti con pulsante di eliminazione -->
       <div class="form-group quick-select-group">
         <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
-        <select id="quick-select">
-          <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
-          <!-- Popolato dinamicamente da JavaScript -->
-        </select>
+        <div class="quick-select-row">
+          <select id="quick-select">
+            <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
+            <!-- Popolato dinamicamente da JavaScript -->
+          </select>
+          <button type="button" id="delete-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dall'elenco a discesa" disabled>🗑️</button>
+        </div>
       </div>
 
       <form id="expense-form">
