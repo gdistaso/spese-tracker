@@ -19,20 +19,30 @@ const DEFAULT_FREQUENT_ITEMS = [
 
 let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
 
-// LISTA DELLA SPESA (Nuova funzionalità)
+// LISTA DELLA SPESA (Memorizzata nel browser)
 let shoppingList = JSON.parse(localStorage.getItem("shopping_list")) || [];
 
 // ==============================================================================
 // 2. SELEZIONE DEGLI ELEMENTI HTML
 // ==============================================================================
 // Schede (Tabs)
-const tabExpensesBtn = document.getElementById("tab-expenses-btn");
 const tabShoppingBtn = document.getElementById("tab-shopping-btn");
-const tabExpensesView = document.getElementById("tab-expenses-view");
+const tabExpensesBtn = document.getElementById("tab-expenses-btn");
 const tabShoppingView = document.getElementById("tab-shopping-view");
+const tabExpensesView = document.getElementById("tab-expenses-view");
 const shoppingBadge = document.getElementById("shopping-badge");
 
-// Form Spese
+// Form e Controlli Lista della Spesa
+const shoppingForm = document.getElementById("shopping-form");
+const shoppingItemNameInput = document.getElementById("shopping-item-name");
+const shoppingQuantityInput = document.getElementById("shopping-quantity");
+const shoppingCategorySelect = document.getElementById("shopping-category");
+const shoppingQuickSelect = document.getElementById("shopping-quick-select");
+const shoppingListElement = document.getElementById("shopping-list");
+const shoppingEmptyState = document.getElementById("shopping-empty-state");
+const clearCheckedShoppingBtn = document.getElementById("clear-checked-shopping-btn");
+
+// Form e Controlli Registro Spese
 const expenseForm = document.getElementById("expense-form");
 const quickSelect = document.getElementById("quick-select");
 const deleteFrequentBtn = document.getElementById("delete-frequent-btn");
@@ -50,122 +60,30 @@ const emptyStateText = document.getElementById("empty-state-text");
 const clearAllBtn = document.getElementById("clear-all-btn");
 const filterCategorySelect = document.getElementById("filter-category");
 
-// Form Lista della Spesa
-const shoppingForm = document.getElementById("shopping-form");
-const shoppingItemNameInput = document.getElementById("shopping-item-name");
-const shoppingQuantityInput = document.getElementById("shopping-quantity");
-const shoppingCategorySelect = document.getElementById("shopping-category");
-const shoppingQuickSelect = document.getElementById("shopping-quick-select");
-const shoppingListElement = document.getElementById("shopping-list");
-const shoppingEmptyState = document.getElementById("shopping-empty-state");
-const clearCheckedShoppingBtn = document.getElementById("clear-checked-shopping-btn");
-
 // ==============================================================================
 // 3. GESTIONE CAMBIO SCHEDA (TABS)
 // ==============================================================================
 function switchTab(target) {
-  if (target === "expenses") {
-    tabExpensesBtn.classList.add("active");
-    tabShoppingBtn.classList.remove("active");
-    tabExpensesView.classList.add("active");
-    tabShoppingView.classList.remove("active");
-  } else {
+  if (target === "shopping") {
     tabShoppingBtn.classList.add("active");
     tabExpensesBtn.classList.remove("active");
     tabShoppingView.classList.add("active");
     tabExpensesView.classList.remove("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    tabExpensesBtn.classList.add("active");
+    tabShoppingBtn.classList.remove("active");
+    tabExpensesView.classList.add("active");
+    tabShoppingView.classList.remove("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 
-tabExpensesBtn.addEventListener("click", () => switchTab("expenses"));
 tabShoppingBtn.addEventListener("click", () => switchTab("shopping"));
+tabExpensesBtn.addEventListener("click", () => switchTab("expenses"));
 
 // ==============================================================================
-// 4. GESTIONE ELENCHI A DISCESA ACQUISTI FREQUENTI
-// ==============================================================================
-function renderFrequentDropdowns() {
-  // Menu nella schermata spese
-  quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
-  // Menu rapido nella lista della spesa
-  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona un articolo da inserire in lista --</option>';
-
-  frequentItems.forEach((item, index) => {
-    const storeInfo = item.store ? ` (${item.store})` : "";
-
-    const opt1 = document.createElement("option");
-    opt1.value = index;
-    opt1.textContent = `${item.desc}${storeInfo} [${item.cat}]`;
-    quickSelect.appendChild(opt1);
-
-    const opt2 = document.createElement("option");
-    opt2.value = index;
-    opt2.textContent = `➕ ${item.desc} [${item.cat}]`;
-    shoppingQuickSelect.appendChild(opt2);
-  });
-
-  deleteFrequentBtn.disabled = true;
-}
-
-function saveFrequentItems() {
-  localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
-}
-
-// Quando si seleziona un acquisto frequente nel modulo spese:
-quickSelect.addEventListener("change", function () {
-  const selectedIndex = this.value;
-  if (selectedIndex === "") {
-    deleteFrequentBtn.disabled = true;
-    return;
-  }
-
-  deleteFrequentBtn.disabled = false;
-  const selectedItem = frequentItems[selectedIndex];
-  if (selectedItem) {
-    descriptionInput.value = selectedItem.desc;
-    categorySelect.value = selectedItem.cat;
-    storeInput.value = selectedItem.store || "";
-    quantityInput.value = 1;
-    amountInput.value = "";
-    amountInput.focus();
-  }
-});
-
-// Eliminare un acquisto frequente dall'elenco a discesa
-deleteFrequentBtn.addEventListener("click", function () {
-  const selectedIndex = quickSelect.value;
-  if (selectedIndex === "") return;
-
-  const itemToDelete = frequentItems[selectedIndex];
-  if (!itemToDelete) return;
-
-  if (confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`)) {
-    frequentItems.splice(selectedIndex, 1);
-    saveFrequentItems();
-    renderFrequentDropdowns();
-
-    if (descriptionInput.value === itemToDelete.desc) {
-      descriptionInput.value = "";
-      storeInput.value = "";
-      amountInput.value = "";
-      quantityInput.value = 1;
-    }
-  }
-});
-
-// Quando si seleziona un articolo frequente dalla lista della spesa:
-shoppingQuickSelect.addEventListener("change", function () {
-  const selectedIndex = this.value;
-  if (selectedIndex === "") return;
-
-  const item = frequentItems[selectedIndex];
-  if (item) {
-    addShoppingItem(item.desc, "1", item.cat);
-    this.value = "";
-  }
-});
-
-// ==============================================================================
-// 5. GESTIONE DELLA LISTA DELLA SPESA
+// 4. GESTIONE DELLA LISTA DELLA SPESA (SCHEDA 1)
 // ==============================================================================
 function saveShoppingList() {
   localStorage.setItem("shopping_list", JSON.stringify(shoppingList));
@@ -208,10 +126,10 @@ function renderShoppingList() {
         </div>
       </div>
       <div class="shopping-right">
-        <button class="btn-convert-expense" title="Registra come spesa pagata" onclick="convertShoppingItemToExpense(${item.id})">
+        <button type="button" class="btn-convert-expense" title="Registra come spesa pagata" onclick="convertShoppingItemToExpense(${item.id})">
           💰 Registra
         </button>
-        <button class="btn-delete" title="Elimina dalla lista" onclick="deleteShoppingItem(${item.id})">✕</button>
+        <button type="button" class="btn-delete" title="Elimina dalla lista" onclick="deleteShoppingItem(${item.id})">✕</button>
       </div>
     `;
 
@@ -222,10 +140,13 @@ function renderShoppingList() {
 }
 
 function addShoppingItem(name, quantity, category) {
+  const cleanName = name.trim();
+  if (!cleanName) return;
+
   const newItem = {
-    id: Date.now() + Math.random(),
-    name: name,
-    quantity: quantity || "",
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    name: cleanName,
+    quantity: quantity ? quantity.trim() : "",
     category: category || "Alimentari",
     checked: false,
   };
@@ -235,13 +156,12 @@ function addShoppingItem(name, quantity, category) {
   renderShoppingList();
 }
 
+// Invio modulo per aggiungere articolo alla lista della spesa
 shoppingForm.addEventListener("submit", function (e) {
   e.preventDefault();
-  const name = shoppingItemNameInput.value.trim();
-  const quantity = shoppingQuantityInput.value.trim();
+  const name = shoppingItemNameInput.value;
+  const quantity = shoppingQuantityInput.value;
   const category = shoppingCategorySelect.value;
-
-  if (!name) return;
 
   addShoppingItem(name, quantity, category);
 
@@ -249,6 +169,7 @@ shoppingForm.addEventListener("submit", function (e) {
   shoppingItemNameInput.focus();
 });
 
+// Spunta articolo nella lista della spesa
 window.toggleShoppingItem = function (id) {
   shoppingList = shoppingList.map((item) => {
     if (item.id === id) {
@@ -260,12 +181,14 @@ window.toggleShoppingItem = function (id) {
   renderShoppingList();
 };
 
+// Elimina articolo dalla lista della spesa
 window.deleteShoppingItem = function (id) {
   shoppingList = shoppingList.filter((item) => item.id !== id);
   saveShoppingList();
   renderShoppingList();
 };
 
+// Cancella tutti gli articoli spuntati
 clearCheckedShoppingBtn.addEventListener("click", function () {
   shoppingList = shoppingList.filter((item) => !item.checked);
   saveShoppingList();
@@ -277,24 +200,106 @@ window.convertShoppingItemToExpense = function (id) {
   const item = shoppingList.find((i) => i.id === id);
   if (!item) return;
 
-  // Passa alla scheda "Registro Spese"
+  // 1. Passa alla scheda "2. Registro Spese"
   switchTab("expenses");
 
-  // Precompila i campi
+  // 2. Precompila i campi nel registro spese
   descriptionInput.value = item.name;
   categorySelect.value = item.category || "Alimentari";
   quantityInput.value = 1;
   amountInput.value = "";
   amountInput.focus();
 
-  // Spunta l'articolo nella lista della spesa come completato
+  // 3. Spunta l'articolo nella lista come completato
   item.checked = true;
   saveShoppingList();
   renderShoppingList();
 };
 
 // ==============================================================================
-// 6. GESTIONE SPESE (REGISTRO)
+// 5. GESTIONE ACQUISTI FREQUENTI
+// ==============================================================================
+function renderFrequentDropdowns() {
+  quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
+  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona un articolo da inserire in lista --</option>';
+
+  frequentItems.forEach((item, index) => {
+    const storeInfo = item.store ? ` (${item.store})` : "";
+
+    const opt1 = document.createElement("option");
+    opt1.value = index;
+    opt1.textContent = `${item.desc}${storeInfo} [${item.cat}]`;
+    quickSelect.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = index;
+    opt2.textContent = `➕ ${item.desc} [${item.cat}]`;
+    shoppingQuickSelect.appendChild(opt2);
+  });
+
+  deleteFrequentBtn.disabled = true;
+}
+
+function saveFrequentItems() {
+  localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
+}
+
+// Aggiungi al volo alla lista della spesa dall'elenco frequenti:
+shoppingQuickSelect.addEventListener("change", function () {
+  const selectedIndex = this.value;
+  if (selectedIndex === "") return;
+
+  const item = frequentItems[selectedIndex];
+  if (item) {
+    addShoppingItem(item.desc, "1", item.cat);
+    this.value = "";
+  }
+});
+
+// Seleziona acquisto frequente nel registro spese:
+quickSelect.addEventListener("change", function () {
+  const selectedIndex = this.value;
+  if (selectedIndex === "") {
+    deleteFrequentBtn.disabled = true;
+    return;
+  }
+
+  deleteFrequentBtn.disabled = false;
+  const selectedItem = frequentItems[selectedIndex];
+  if (selectedItem) {
+    descriptionInput.value = selectedItem.desc;
+    categorySelect.value = selectedItem.cat;
+    storeInput.value = selectedItem.store || "";
+    quantityInput.value = 1;
+    amountInput.value = "";
+    amountInput.focus();
+  }
+});
+
+// Elimina voce dagli acquisti frequenti:
+deleteFrequentBtn.addEventListener("click", function () {
+  const selectedIndex = quickSelect.value;
+  if (selectedIndex === "") return;
+
+  const itemToDelete = frequentItems[selectedIndex];
+  if (!itemToDelete) return;
+
+  if (confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`)) {
+    frequentItems.splice(selectedIndex, 1);
+    saveFrequentItems();
+    renderFrequentDropdowns();
+
+    if (descriptionInput.value === itemToDelete.desc) {
+      descriptionInput.value = "";
+      storeInput.value = "";
+      amountInput.value = "";
+      quantityInput.value = 1;
+    }
+  }
+});
+
+// ==============================================================================
+// 6. GESTIONE REGISTRO SPESE (SCHEDA 2)
 // ==============================================================================
 function saveExpenses() {
   localStorage.setItem("expenses", JSON.stringify(expenses));
@@ -348,7 +353,7 @@ function renderExpenses() {
       </div>
       <div class="expense-right">
         <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
-        <button class="btn-delete" title="Elimina spesa" onclick="deleteExpense(${expense.id})">✕</button>
+        <button type="button" class="btn-delete" title="Elimina spesa" onclick="deleteExpense(${expense.id})">✕</button>
       </div>
     `;
 
@@ -361,6 +366,7 @@ filterCategorySelect.addEventListener("change", function (event) {
   renderExpenses();
 });
 
+// Aggiunta nuova spesa nel registro
 expenseForm.addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -426,8 +432,8 @@ clearAllBtn.addEventListener("click", function () {
 });
 
 // ==============================================================================
-// 7. AVVIO INIZIALE
+// 7. AVVIO INIZIALE (La Lista della Spesa è la scheda predefinita all'avvio)
 // ==============================================================================
 renderFrequentDropdowns();
-renderExpenses();
 renderShoppingList();
+renderExpenses();
