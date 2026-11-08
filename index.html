@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Gestore Spese">
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=4.1">
 </head>
 <body>
   <div class="container">
@@ -110,7 +110,7 @@
     <main id="tab-expenses-view" class="tab-view">
       <section class="summary-cards">
         <div class="card card-total">
-          <span class="label" id="total-label">Totale Speso</span>
+          <span class="label" id="total-label">Totale Spesa Corrente</span>
           <span class="amount" id="total-amount">€ 0.00</span>
         </div>
         <div class="card card-count">
@@ -184,7 +184,7 @@
               <option value="Casa">🏠 Casa</option>
               <option value="Altro">✨ Altro</option>
             </select>
-            <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
+            <button id="clear-all-btn" class="btn-secondary" type="button" title="Azzera le spese correnti per iniziare una nuova spesa (lo storico resta salvato)">Svuota spese</button>
           </div>
         </div>
 
@@ -259,6 +259,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=4.1"></script>
 </body>
 </html>

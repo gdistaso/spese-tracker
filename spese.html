@@ -55,27 +55,28 @@
 
     .nav-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
       background-color: #e5e7eb;
       padding: 4px;
       border-radius: 12px;
     }
 
     .tab-btn {
-      padding: 12px 10px;
+      padding: 11px 6px;
       background-color: transparent;
       color: #4b5563;
       border: none;
       border-radius: 9px;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     .tab-btn.active {
@@ -87,8 +88,8 @@
     .badge-count {
       background-color: #ef4444;
       color: #ffffff;
-      font-size: 0.72rem;
-      padding: 2px 7px;
+      font-size: 0.7rem;
+      padding: 2px 6px;
       border-radius: 10px;
       font-weight: 700;
     }
@@ -101,6 +102,69 @@
 
     .tab-view.active {
       display: flex;
+    }
+
+    .report-mode-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background-color: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .btn-mode {
+      padding: 10px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-mode.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+
+    .yearly-months-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .month-summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .month-summary-card .m-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .month-summary-card .m-amount {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .month-summary-card.has-expenses {
+      border-color: #93c5fd;
+      background: #eff6ff;
     }
 
     .summary-cards {
@@ -459,12 +523,16 @@
       }
 
       .nav-tabs {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
       }
 
       .tab-btn {
-        padding: 10px 6px;
-        font-size: 0.85rem;
+        padding: 10px 4px;
+        font-size: 0.82rem;
+      }
+
+      .yearly-months-grid {
+        grid-template-columns: 1fr 1fr;
       }
     }
   </style>
@@ -473,15 +541,18 @@
   <div class="container">
     <header>
       <h1>Gestore Spese</h1>
-      <p class="subtitle">Prima pianifichi la spesa, poi registri i costi</p>
+      <p class="subtitle">Lista della spesa, registro costi e report mensili/annuali</p>
     </header>
 
     <nav class="nav-tabs">
       <button type="button" class="tab-btn active" id="tab-shopping-btn">
-        🛒 1. Lista della Spesa <span id="shopping-badge" class="badge-count">0</span>
+        🛒 Lista <span id="shopping-badge" class="badge-count">0</span>
       </button>
       <button type="button" class="tab-btn" id="tab-expenses-btn">
-        💰 2. Registro Spese
+        💰 Spese
+      </button>
+      <button type="button" class="tab-btn" id="tab-reports-btn">
+        📊 Storico
       </button>
     </nav>
 
@@ -558,7 +629,7 @@
     <main id="tab-expenses-view" class="tab-view">
       <section class="summary-cards">
         <div class="card card-total">
-          <span class="label" id="total-label">Totale Speso</span>
+          <span class="label" id="total-label">Totale Spesa Corrente</span>
           <span class="amount" id="total-amount">€ 0.00</span>
         </div>
         <div class="card card-count">
@@ -622,7 +693,7 @@
 
       <section class="list-section">
         <div class="list-header">
-          <h2>Cronologia Spese</h2>
+          <h2>Ultime spese registrate</h2>
           <div class="list-controls">
             <select id="filter-category" class="filter-select" title="Filtra per categoria">
               <option value="ALL">🔍 Tutte le categorie</option>
@@ -632,7 +703,7 @@
               <option value="Casa">🏠 Casa</option>
               <option value="Altro">✨ Altro</option>
             </select>
-            <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
+            <button id="clear-all-btn" class="btn-secondary" type="button" title="Azzera le spese correnti per iniziare una nuova spesa (lo storico resta salvato)">Svuota spese</button>
           </div>
         </div>
 
@@ -643,11 +714,93 @@
         </div>
       </section>
     </main>
+
+    <!-- SCHEDA 3: STORICO E REPORT MENSILE / ANNUALE -->
+    <main id="tab-reports-view" class="tab-view">
+      <section class="form-section">
+        <div class="report-mode-toggle">
+          <button type="button" class="btn-mode active" id="btn-mode-monthly">📅 Vista Mensile</button>
+          <button type="button" class="btn-mode" id="btn-mode-yearly">📆 Vista Annuale</button>
+        </div>
+
+        <div id="section-select-month" class="form-group" style="margin-top: 14px; margin-bottom: 0;">
+          <label for="report-month-select">Seleziona il Mese da consultare:</label>
+          <select id="report-month-select"></select>
+        </div>
+
+        <div id="section-select-year" class="form-group" style="margin-top: 14px; margin-bottom: 0; display: none;">
+          <label for="report-year-select">Seleziona l'Anno da consultare:</label>
+          <select id="report-year-select"></select>
+        </div>
+      </section>
+
+      <section class="summary-cards">
+        <div class="card card-total">
+          <span class="label" id="report-summary-label">Totale Mese</span>
+          <span class="amount" id="report-total-amount">€ 0.00</span>
+        </div>
+        <div class="card card-count">
+          <span class="label">Numero Spese</span>
+          <span class="amount" id="report-total-count">0</span>
+        </div>
+      </section>
+
+      <section id="yearly-breakdown-section" class="list-section" style="display: none;">
+        <h2>Ripartizione Mese per Mese</h2>
+        <div id="yearly-months-grid" class="yearly-months-grid"></div>
+      </section>
+
+      <section class="list-section">
+        <div class="list-header">
+          <h2 id="report-list-title">Dettaglio Spese</h2>
+        </div>
+
+        <ul id="report-expense-list" class="expense-list"></ul>
+
+        <div id="report-empty-state" class="empty-state">
+          <p>Nessuna spesa trovata per questo periodo.</p>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script>
-    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    // Spese della sessione/spesa corrente
+    let currentExpenses = JSON.parse(localStorage.getItem("current_expenses"));
+    // Storico permanente di tutte le spese registrate
+    let expenseHistory = JSON.parse(localStorage.getItem("expense_history"));
+    // Recupero da versione precedente per retrocompatibilità
+    const legacyExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+    if (!expenseHistory) {
+      expenseHistory = Array.isArray(legacyExpenses) ? [...legacyExpenses] : [];
+      localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
+    } else {
+      legacyExpenses.forEach((exp) => {
+        if (!expenseHistory.some((h) => h.id === exp.id)) {
+          expenseHistory.push(exp);
+        }
+      });
+      localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
+    }
+
+    if (!currentExpenses) {
+      currentExpenses = Array.isArray(legacyExpenses) ? [...legacyExpenses] : [];
+      localStorage.setItem("current_expenses", JSON.stringify(currentExpenses));
+    }
+
+    // 'expenses' gestisce la sessione corrente per la Scheda 2
+    let expenses = currentExpenses;
     let currentFilter = "ALL";
+
+    const MONTH_NAMES = [
+      "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
+
+    let reportMode = "monthly";
+    let selectedReportMonth = "";
+    let selectedReportYear = "";
 
     const DEFAULT_FREQUENT_ITEMS = [
       { desc: "Pane", cat: "Alimentari", store: "Panetteria" },
@@ -672,8 +825,10 @@
 
     const tabShoppingBtn = document.getElementById("tab-shopping-btn");
     const tabExpensesBtn = document.getElementById("tab-expenses-btn");
+    const tabReportsBtn = document.getElementById("tab-reports-btn");
     const tabShoppingView = document.getElementById("tab-shopping-view");
     const tabExpensesView = document.getElementById("tab-expenses-view");
+    const tabReportsView = document.getElementById("tab-reports-view");
     const shoppingBadge = document.getElementById("shopping-badge");
 
     const shoppingForm = document.getElementById("shopping-form");
@@ -703,24 +858,78 @@
     const clearAllBtn = document.getElementById("clear-all-btn");
     const filterCategorySelect = document.getElementById("filter-category");
 
+    const btnModeMonthly = document.getElementById("btn-mode-monthly");
+    const btnModeYearly = document.getElementById("btn-mode-yearly");
+    const sectionSelectMonth = document.getElementById("section-select-month");
+    const sectionSelectYear = document.getElementById("section-select-year");
+    const reportMonthSelect = document.getElementById("report-month-select");
+    const reportYearSelect = document.getElementById("report-year-select");
+    const reportSummaryLabel = document.getElementById("report-summary-label");
+    const reportTotalAmount = document.getElementById("report-total-amount");
+    const reportTotalCount = document.getElementById("report-total-count");
+    const yearlyBreakdownSection = document.getElementById("yearly-breakdown-section");
+    const yearlyMonthsGrid = document.getElementById("yearly-months-grid");
+    const reportListTitle = document.getElementById("report-list-title");
+    const reportExpenseList = document.getElementById("report-expense-list");
+    const reportEmptyState = document.getElementById("report-empty-state");
+
     function switchTab(target) {
+      [tabShoppingBtn, tabExpensesBtn, tabReportsBtn].forEach(b => b.classList.remove("active"));
+      [tabShoppingView, tabExpensesView, tabReportsView].forEach(v => v.classList.remove("active"));
+
       if (target === "shopping") {
         tabShoppingBtn.classList.add("active");
-        tabExpensesBtn.classList.remove("active");
         tabShoppingView.classList.add("active");
-        tabExpensesView.classList.remove("active");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
+      } else if (target === "expenses") {
         tabExpensesBtn.classList.add("active");
-        tabShoppingBtn.classList.remove("active");
         tabExpensesView.classList.add("active");
-        tabShoppingView.classList.remove("active");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (target === "reports") {
+        tabReportsBtn.classList.add("active");
+        tabReportsView.classList.add("active");
+        renderReports();
       }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     tabShoppingBtn.addEventListener("click", () => switchTab("shopping"));
     tabExpensesBtn.addEventListener("click", () => switchTab("expenses"));
+    tabReportsBtn.addEventListener("click", () => switchTab("reports"));
+
+    function getExpenseDateInfo(expense) {
+      let dateObj = null;
+
+      if (expense.id && expense.id > 1000000000000) {
+        const d = new Date(expense.id);
+        if (!isNaN(d.getTime())) {
+          dateObj = d;
+        }
+      }
+
+      if (!dateObj && expense.date) {
+        const parts = expense.date.split('/');
+        if (parts.length === 3) {
+          dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        }
+      }
+
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        dateObj = new Date();
+      }
+
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth();
+      const monthPadded = String(month + 1).padStart(2, "0");
+      const monthKey = `${year}-${monthPadded}`;
+
+      return {
+        year: String(year),
+        monthIndex: month,
+        monthKey: monthKey,
+        monthName: MONTH_NAMES[month],
+        dateFormatted: expense.date || dateObj.toLocaleDateString("it-IT")
+      };
+    }
 
     function saveShoppingList() {
       localStorage.setItem("shopping_list", JSON.stringify(shoppingList));
@@ -849,7 +1058,7 @@
 
     function renderFrequentDropdowns() {
       quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
-      shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona per aggiungere alla lista --</option>';
+      shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona o elimina una voce frequente --</option>';
 
       frequentItems.forEach((item, index) => {
         const storeInfo = item.store ? ` (${item.store})` : "";
@@ -950,7 +1159,12 @@
     });
 
     function saveExpenses() {
+      localStorage.setItem("current_expenses", JSON.stringify(expenses));
       localStorage.setItem("expenses", JSON.stringify(expenses));
+    }
+
+    function saveExpenseHistory() {
+      localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
     }
 
     function renderExpenses() {
@@ -962,15 +1176,21 @@
 
       const total = displayedExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
-      totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Speso" : `Totale (${currentFilter})`;
+      totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Spesa Corrente" : `Totale (${currentFilter})`;
       totalAmountElement.textContent = `€ ${total.toFixed(2)}`;
       totalCountElement.textContent = displayedExpenses.length;
 
       if (displayedExpenses.length === 0) {
         emptyStateElement.style.display = "block";
-        emptyStateText.textContent = currentFilter === "ALL"
-          ? "Nessuna spesa registrata. Aggiungine una dal modulo sopra!"
-          : `Nessuna spesa trovata nella categoria "${currentFilter}".`;
+        if (currentFilter === "ALL") {
+          if (expenseHistory && expenseHistory.length > 0) {
+            emptyStateText.innerHTML = "Nessuna spesa nella lista corrente.<br><small style='color: #6b7280; display: inline-block; margin-top: 6px;'>💡 Le spese precedenti rimangono registrate nella scheda <strong>📊 Storico</strong>.</small>";
+          } else {
+            emptyStateText.textContent = "Nessuna spesa registrata. Aggiungine una dal modulo sopra!";
+          }
+        } else {
+          emptyStateText.textContent = `Nessuna spesa trovata nella categoria "${currentFilter}".`;
+        }
         clearAllBtn.style.display = expenses.length > 0 ? "inline-block" : "none";
       } else {
         emptyStateElement.style.display = "none";
@@ -1052,9 +1272,17 @@
         date: new Date().toLocaleDateString("it-IT"),
       };
 
+      // Salva nella sessione corrente
       expenses.unshift(newExpense);
       saveExpenses();
       renderExpenses();
+
+      // Salva permanentemente nello Storico
+      expenseHistory.unshift(newExpense);
+      saveExpenseHistory();
+      if (tabReportsView.classList.contains("active")) {
+        renderReports();
+      }
 
       expenseForm.reset();
       quantityInput.value = 1;
@@ -1064,18 +1292,214 @@
     });
 
     window.deleteExpense = function (id) {
-      expenses = expenses.filter((expense) => expense.id !== id);
-      saveExpenses();
-      renderExpenses();
+      if (confirm("Vuoi eliminare questa spesa? Verrà rimossa anche dallo storico.")) {
+        expenses = expenses.filter((expense) => expense.id !== id);
+        expenseHistory = expenseHistory.filter((expense) => expense.id !== id);
+        saveExpenses();
+        saveExpenseHistory();
+        renderExpenses();
+        if (tabReportsView.classList.contains("active")) {
+          renderReports();
+        }
+      }
     };
 
     clearAllBtn.addEventListener("click", function () {
-      if (confirm("Sei sicuro di voler cancellare tutte le spese registrate?")) {
+      if (expenses.length === 0) return;
+
+      if (confirm("Vuoi azzerare le spese registrate per iniziare una nuova lista?\n\nTranquillo: tutte le spese rimarranno salvate al sicuro nello Storico!")) {
+        // Azzera solo le spese correnti per prepararsi alla nuova spesa
         expenses = [];
         saveExpenses();
         renderExpenses();
+        // Lo storico (expenseHistory) NON viene toccato e rimane intatto!
       }
     });
+
+    window.deleteHistoryExpense = function (id) {
+      if (confirm("Vuoi eliminare definitivamente questa spesa dallo storico?")) {
+        expenseHistory = expenseHistory.filter((e) => e.id !== id);
+        expenses = expenses.filter((e) => e.id !== id);
+        saveExpenseHistory();
+        saveExpenses();
+        renderReports();
+        renderExpenses();
+      }
+    };
+
+    btnModeMonthly.addEventListener("click", function () {
+      reportMode = "monthly";
+      btnModeMonthly.classList.add("active");
+      btnModeYearly.classList.remove("active");
+      sectionSelectMonth.style.display = "block";
+      sectionSelectYear.style.display = "none";
+      yearlyBreakdownSection.style.display = "none";
+      renderReports();
+    });
+
+    btnModeYearly.addEventListener("click", function () {
+      reportMode = "yearly";
+      btnModeYearly.classList.add("active");
+      btnModeMonthly.classList.remove("active");
+      sectionSelectMonth.style.display = "none";
+      sectionSelectYear.style.display = "block";
+      yearlyBreakdownSection.style.display = "block";
+      renderReports();
+    });
+
+    reportMonthSelect.addEventListener("change", function () {
+      selectedReportMonth = this.value;
+      renderReportsData();
+    });
+
+    reportYearSelect.addEventListener("change", function () {
+      selectedReportYear = this.value;
+      renderReportsData();
+    });
+
+    function populateReportSelectors() {
+      const monthsMap = new Map();
+      const yearsSet = new Set();
+
+      const now = new Date();
+      const currentYearStr = String(now.getFullYear());
+      const currentMonthPadded = String(now.getMonth() + 1).padStart(2, "0");
+      const currentMonthKey = `${currentYearStr}-${currentMonthPadded}`;
+      monthsMap.set(currentMonthKey, `${MONTH_NAMES[now.getMonth()]} ${currentYearStr}`);
+      yearsSet.add(currentYearStr);
+
+      expenseHistory.forEach(exp => {
+        const info = getExpenseDateInfo(exp);
+        monthsMap.set(info.monthKey, `${info.monthName} ${info.year}`);
+        yearsSet.add(info.year);
+      });
+
+      const sortedMonthKeys = Array.from(monthsMap.keys()).sort().reverse();
+      reportMonthSelect.innerHTML = "";
+      sortedMonthKeys.forEach(key => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = monthsMap.get(key);
+        reportMonthSelect.appendChild(opt);
+      });
+
+      if (!selectedReportMonth || !monthsMap.has(selectedReportMonth)) {
+        selectedReportMonth = sortedMonthKeys[0] || currentMonthKey;
+      }
+      reportMonthSelect.value = selectedReportMonth;
+
+      const sortedYears = Array.from(yearsSet).sort().reverse();
+      reportYearSelect.innerHTML = "";
+      sortedYears.forEach(yr => {
+        const opt = document.createElement("option");
+        opt.value = yr;
+        opt.textContent = `Anno ${yr}`;
+        reportYearSelect.appendChild(opt);
+      });
+
+      if (!selectedReportYear || !yearsSet.has(selectedReportYear)) {
+        selectedReportYear = sortedYears[0] || currentYearStr;
+      }
+      reportYearSelect.value = selectedReportYear;
+    }
+
+    function renderReports() {
+      populateReportSelectors();
+      renderReportsData();
+    }
+
+    function renderReportsData() {
+      reportExpenseList.innerHTML = "";
+
+      if (reportMode === "monthly") {
+        reportSummaryLabel.textContent = "Totale Mese";
+
+        const filtered = expenseHistory.filter(exp => {
+          const info = getExpenseDateInfo(exp);
+          return info.monthKey === selectedReportMonth;
+        });
+
+        const monthLabel = reportMonthSelect.options[reportMonthSelect.selectedIndex]?.text || "Selezionato";
+        reportListTitle.textContent = `Spese di ${monthLabel}`;
+
+        const total = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+        reportTotalAmount.textContent = `€ ${total.toFixed(2)}`;
+        reportTotalCount.textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          reportEmptyState.style.display = "block";
+        } else {
+          reportEmptyState.style.display = "none";
+          filtered.forEach(exp => renderReportItem(exp));
+        }
+
+      } else {
+        reportSummaryLabel.textContent = `Totale Anno ${selectedReportYear}`;
+
+        const filtered = expenseHistory.filter(exp => {
+          const info = getExpenseDateInfo(exp);
+          return info.year === selectedReportYear;
+        });
+
+        reportListTitle.textContent = `Tutte le spese dell'Anno ${selectedReportYear}`;
+
+        const total = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+        reportTotalAmount.textContent = `€ ${total.toFixed(2)}`;
+        reportTotalCount.textContent = filtered.length;
+
+        yearlyMonthsGrid.innerHTML = "";
+        MONTH_NAMES.forEach((mName, mIdx) => {
+          const monthExp = filtered.filter(exp => getExpenseDateInfo(exp).monthIndex === mIdx);
+          const mTotal = monthExp.reduce((a, c) => a + c.amount, 0);
+
+          const card = document.createElement("div");
+          card.className = `month-summary-card ${mTotal > 0 ? "has-expenses" : ""}`;
+          card.innerHTML = `
+            <span class="m-name">${mName}</span>
+            <span class="m-amount">€ ${mTotal.toFixed(2)}</span>
+          `;
+          yearlyMonthsGrid.appendChild(card);
+        });
+
+        if (filtered.length === 0) {
+          reportEmptyState.style.display = "block";
+        } else {
+          reportEmptyState.style.display = "none";
+          filtered.forEach(exp => renderReportItem(exp));
+        }
+      }
+    }
+
+    function renderReportItem(expense) {
+      const li = document.createElement("li");
+      li.className = "expense-item";
+
+      const qtyBadge = expense.quantity && expense.quantity > 1
+        ? `<span class="badge-qty">Qtà: ${expense.quantity}</span>`
+        : "";
+
+      const storeBadge = expense.store
+        ? `<span class="badge-store">🏬 ${expense.store}</span>`
+        : "";
+
+      li.innerHTML = `
+        <div class="expense-info">
+          <span class="expense-desc">${expense.description}</span>
+          <div class="expense-meta">
+            <span class="badge-tag">${expense.category}</span>
+            ${storeBadge}
+            ${qtyBadge}
+            <span>📅 ${expense.date}</span>
+          </div>
+        </div>
+        <div class="expense-right">
+          <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
+          <button type="button" class="btn-delete" title="Elimina dallo storico" onclick="deleteHistoryExpense(${expense.id})">✕</button>
+        </div>
+      `;
+
+      reportExpenseList.appendChild(li);
+    }
 
     renderFrequentDropdowns();
     renderShoppingList();

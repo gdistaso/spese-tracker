@@ -1,7 +1,33 @@
 // ==============================================================================
 // 1. STATO DELL'APPLICAZIONE
 // ==============================================================================
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+// Spese della sessione/spesa corrente
+let currentExpenses = JSON.parse(localStorage.getItem("current_expenses"));
+// Storico permanente di tutte le spese registrate
+let expenseHistory = JSON.parse(localStorage.getItem("expense_history"));
+// Recupero da versione precedente per retrocompatibilità
+const legacyExpenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+if (!expenseHistory) {
+  expenseHistory = Array.isArray(legacyExpenses) ? [...legacyExpenses] : [];
+  localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
+} else {
+  // Assicuriamoci che tutte le eventuali spese pregresse siano presenti nello storico
+  legacyExpenses.forEach((exp) => {
+    if (!expenseHistory.some((h) => h.id === exp.id)) {
+      expenseHistory.push(exp);
+    }
+  });
+  localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
+}
+
+if (!currentExpenses) {
+  currentExpenses = Array.isArray(legacyExpenses) ? [...legacyExpenses] : [];
+  localStorage.setItem("current_expenses", JSON.stringify(currentExpenses));
+}
+
+// 'expenses' gestisce la sessione corrente per la Scheda 2
+let expenses = currentExpenses;
 let currentFilter = "ALL";
 
 // Nomi dei mesi in italiano
@@ -398,7 +424,12 @@ deleteFrequentBtn.addEventListener("click", function () {
 // 7. GESTIONE REGISTRO SPESE (SCHEDA 2)
 // ==============================================================================
 function saveExpenses() {
+  localStorage.setItem("current_expenses", JSON.stringify(expenses));
   localStorage.setItem("expenses", JSON.stringify(expenses));
+}
+
+function saveExpenseHistory() {
+  localStorage.setItem("expense_history", JSON.stringify(expenseHistory));
 }
 
 function renderExpenses() {
@@ -410,15 +441,21 @@ function renderExpenses() {
 
   const total = displayedExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
-  totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Speso" : `Totale (${currentFilter})`;
+  totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Spesa Corrente" : `Totale (${currentFilter})`;
   totalAmountElement.textContent = `€ ${total.toFixed(2)}`;
   totalCountElement.textContent = displayedExpenses.length;
 
   if (displayedExpenses.length === 0) {
     emptyStateElement.style.display = "block";
-    emptyStateText.textContent = currentFilter === "ALL"
-      ? "Nessuna spesa registrata. Aggiungine una dal modulo sopra!"
-      : `Nessuna spesa trovata nella categoria "${currentFilter}".`;
+    if (currentFilter === "ALL") {
+      if (expenseHistory && expenseHistory.length > 0) {
+        emptyStateText.innerHTML = "Nessuna spesa nella lista corrente.<br><small style='color: #6b7280; display: inline-block; margin-top: 6px;'>💡 Le spese precedenti rimangono registrate nella scheda <strong>📊 Storico</strong>.</small>";
+      } else {
+        emptyStateText.textContent = "Nessuna spesa registrata. Aggiungine una dal modulo sopra!";
+      }
+    } else {
+      emptyStateText.textContent = `Nessuna spesa trovata nella categoria "${currentFilter}".`;
+    }
     clearAllBtn.style.display = expenses.length > 0 ? "inline-block" : "none";
   } else {
     emptyStateElement.style.display = "none";
@@ -500,9 +537,17 @@ expenseForm.addEventListener("submit", function (event) {
     date: new Date().toLocaleDateString("it-IT"),
   };
 
+  // Salva nella sessione corrente
   expenses.unshift(newExpense);
   saveExpenses();
   renderExpenses();
+
+  // Salva permanentemente nello Storico
+  expenseHistory.unshift(newExpense);
+  saveExpenseHistory();
+  if (tabReportsView.classList.contains("active")) {
+    renderReports();
+  }
 
   expenseForm.reset();
   quantityInput.value = 1;
@@ -512,24 +557,41 @@ expenseForm.addEventListener("submit", function (event) {
 });
 
 window.deleteExpense = function (id) {
-  expenses = expenses.filter((expense) => expense.id !== id);
-  saveExpenses();
-  renderExpenses();
-  if (tabReportsView.classList.contains("active")) {
-    renderReports();
-  }
-};
-
-clearAllBtn.addEventListener("click", function () {
-  if (confirm("Sei sicuro di voler cancellare tutte le spese registrate?")) {
-    expenses = [];
+  if (confirm("Vuoi eliminare questa spesa? Verrà rimossa anche dallo storico.")) {
+    expenses = expenses.filter((expense) => expense.id !== id);
+    expenseHistory = expenseHistory.filter((expense) => expense.id !== id);
     saveExpenses();
+    saveExpenseHistory();
     renderExpenses();
     if (tabReportsView.classList.contains("active")) {
       renderReports();
     }
   }
+};
+
+clearAllBtn.addEventListener("click", function () {
+  if (expenses.length === 0) return;
+
+  if (confirm("Vuoi azzerare le spese registrate per iniziare una nuova lista?\n\nTranquillo: tutte le spese rimarranno salvate al sicuro nello Storico!")) {
+    // Azzera solo le spese correnti per prepararsi alla prossima spesa
+    expenses = [];
+    saveExpenses();
+    renderExpenses();
+    // Lo storico (expenseHistory) NON viene toccato e rimane intatto!
+  }
 });
+
+// Eliminazione mirata di una spesa dallo storico
+window.deleteHistoryExpense = function (id) {
+  if (confirm("Vuoi eliminare definitivamente questa spesa dallo storico?")) {
+    expenseHistory = expenseHistory.filter((e) => e.id !== id);
+    expenses = expenses.filter((e) => e.id !== id);
+    saveExpenseHistory();
+    saveExpenses();
+    renderReports();
+    renderExpenses();
+  }
+};
 
 // ==============================================================================
 // 8. SCHEDA 3: STORICO E REPORT MENSILE / ANNUALE
@@ -565,7 +627,7 @@ reportYearSelect.addEventListener("change", function () {
 });
 
 function populateReportSelectors() {
-  // Ricaviamo tutti i mesi e gli anni presenti nelle spese
+  // Ricaviamo tutti i mesi e gli anni presenti nello storico spese
   const monthsMap = new Map();
   const yearsSet = new Set();
 
@@ -577,7 +639,7 @@ function populateReportSelectors() {
   monthsMap.set(currentMonthKey, `${MONTH_NAMES[now.getMonth()]} ${currentYearStr}`);
   yearsSet.add(currentYearStr);
 
-  expenses.forEach(exp => {
+  expenseHistory.forEach(exp => {
     const info = getExpenseDateInfo(exp);
     monthsMap.set(info.monthKey, `${info.monthName} ${info.year}`);
     yearsSet.add(info.year);
@@ -626,7 +688,7 @@ function renderReportsData() {
     // FILTRO MENSILE
     reportSummaryLabel.textContent = "Totale Mese";
 
-    const filtered = expenses.filter(exp => {
+    const filtered = expenseHistory.filter(exp => {
       const info = getExpenseDateInfo(exp);
       return info.monthKey === selectedReportMonth;
     });
@@ -649,7 +711,7 @@ function renderReportsData() {
     // FILTRO ANNUALE
     reportSummaryLabel.textContent = `Totale Anno ${selectedReportYear}`;
 
-    const filtered = expenses.filter(exp => {
+    const filtered = expenseHistory.filter(exp => {
       const info = getExpenseDateInfo(exp);
       return info.year === selectedReportYear;
     });
@@ -708,6 +770,7 @@ function renderReportItem(expense) {
     </div>
     <div class="expense-right">
       <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
+      <button type="button" class="btn-delete" title="Elimina dallo storico" onclick="deleteHistoryExpense(${expense.id})">✕</button>
     </div>
   `;
 
