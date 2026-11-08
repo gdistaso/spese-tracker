@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestore Spese & Lista della Spesa</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.1">
 </head>
 <body>
   <div class="container">
@@ -13,7 +13,7 @@
       <p class="subtitle">Prima pianifichi la spesa, poi registri i costi</p>
     </header>
 
-    <!-- Navigazione a Schede: La Lista della Spesa viene PRIMA -->
+    <!-- Navigazione a Schede: La Lista della Spesa viene al 1° Posto -->
     <nav class="nav-tabs">
       <button type="button" class="tab-btn active" id="tab-shopping-btn">
         🛒 1. Lista della Spesa <span id="shopping-badge" class="badge-count">0</span>
@@ -24,25 +24,28 @@
     </nav>
 
     <!-- ===================================================================== -->
-    <!-- SCHEDA 1 (PRINCIPALE): LISTA DELLA SPESA (Cosa devi comprare)         -->
+    <!-- SCHEDA 1 (PRINCIPALE): LISTA DELLA SPESA                              -->
     <!-- ===================================================================== -->
     <main id="tab-shopping-view" class="tab-view active">
       <section class="form-section">
-        <h2>📝 Cosa devi comprare?</h2>
+        <h2>📝 Aggiungi articolo alla lista</h2>
 
         <form id="shopping-form">
           <div class="form-group">
-            <label for="shopping-item-name">Articolo da comprare</label>
-            <div class="input-with-button">
-              <input type="text" id="shopping-item-name" placeholder="Es. Pane, Mele, Caffè, Detersivo..." required autocomplete="off">
-              <button type="submit" class="btn-primary btn-add">➕ Aggiungi</button>
-            </div>
+            <label for="shopping-item-name">Cosa devi comprare?</label>
+            <input 
+              type="text" 
+              id="shopping-item-name" 
+              placeholder="Es. Pane, Latte, Mele, Detersivo..." 
+              required 
+              autocomplete="off"
+            >
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="shopping-quantity">Quantità / Note (opzionale)</label>
-              <input type="text" id="shopping-quantity" placeholder="Es. 1kg, 2 bottiglie, 1 pacco...">
+              <label for="shopping-quantity">Quantità / Dettaglio (opzionale)</label>
+              <input type="text" id="shopping-quantity" placeholder="Es. 1kg, 2 pezzi, 1 pacco...">
             </div>
 
             <div class="form-group">
@@ -56,14 +59,18 @@
               </select>
             </div>
           </div>
+
+          <button type="submit" class="btn-primary" id="btn-add-shopping">
+            ➕ Aggiungi alla Lista
+          </button>
         </form>
 
-        <!-- Scorciatoia: aggiungi velocemente da acquisti frequenti -->
-        <div class="quick-select-group" style="margin-top: 14px; margin-bottom: 0;">
-          <label for="shopping-quick-select">⚡ Oppure aggiungi al volo un acquisto frequente:</label>
+        <!-- Aggiunta rapida da acquisti frequenti -->
+        <div class="quick-select-group">
+          <label for="shopping-quick-select">⚡ Oppure scegli da acquisti frequenti:</label>
           <div class="quick-select-row">
             <select id="shopping-quick-select">
-              <option value="">-- Seleziona un articolo da inserire in lista --</option>
+              <option value="">-- Seleziona per aggiungere alla lista --</option>
             </select>
           </div>
         </div>
@@ -74,20 +81,22 @@
         <div class="list-header">
           <h2>Articoli da comprare</h2>
           <div class="list-controls">
-            <button id="clear-checked-shopping-btn" class="btn-secondary" type="button" style="display:none;">Cancella spuntati</button>
+            <button id="clear-checked-shopping-btn" class="btn-secondary" type="button" style="display:none;">
+              Cancella spuntati
+            </button>
           </div>
         </div>
 
         <ul id="shopping-list" class="shopping-list"></ul>
 
         <div id="shopping-empty-state" class="empty-state">
-          <p>La tua lista della spesa è vuota! Scrivi un articolo sopra e tocca <strong>"➕ Aggiungi"</strong>.</p>
+          <p>La tua lista della spesa è vuota! Scrivi un articolo sopra e premi <strong>"Aggiungi alla Lista"</strong>.</p>
         </div>
       </section>
     </main>
 
     <!-- ===================================================================== -->
-    <!-- SCHEDA 2: REGISTRO SPESE EFFETTUATE (Importi e Totali)                -->
+    <!-- SCHEDA 2: REGISTRO DELLE SPESE EFFETTUATE                             -->
     <!-- ===================================================================== -->
     <main id="tab-expenses-view" class="tab-view">
       <!-- Sezione Riepilogo / Totali -->
@@ -106,7 +115,6 @@
       <section class="form-section">
         <h2>Registra una Spesa</h2>
 
-        <!-- Elenco a discesa degli acquisti frequenti -->
         <div class="form-group quick-select-group">
           <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
           <div class="quick-select-row">
@@ -183,6 +191,6 @@
     </main>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2.1"></script>
 </body>
 </html>

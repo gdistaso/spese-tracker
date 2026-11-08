@@ -4,7 +4,7 @@
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 let currentFilter = "ALL";
 
-// Lista iniziale degli acquisti frequenti
+// Lista iniziale degli acquisti frequenti (Pulita e corretta)
 const DEFAULT_FREQUENT_ITEMS = [
   { desc: "Pane", cat: "Alimentari", store: "Panetteria" },
   { desc: "Pasta", cat: "Alimentari", store: "Supermercato" },
@@ -18,6 +18,12 @@ const DEFAULT_FREQUENT_ITEMS = [
 ];
 
 let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
+
+// Pulizia automatica di eventuali caratteri corrotti ereditati in precedenza
+frequentItems = frequentItems.map(item => ({
+  ...item,
+  desc: item.desc.replace(/\uFFFD|\?/g, "è")
+}));
 
 // LISTA DELLA SPESA (Memorizzata nel browser)
 let shoppingList = JSON.parse(localStorage.getItem("shopping_list")) || [];
@@ -140,13 +146,13 @@ function renderShoppingList() {
 }
 
 function addShoppingItem(name, quantity, category) {
-  const cleanName = name.trim();
+  const cleanName = (name || "").trim();
   if (!cleanName) return;
 
   const newItem = {
     id: Date.now() + Math.floor(Math.random() * 1000),
     name: cleanName,
-    quantity: quantity ? quantity.trim() : "",
+    quantity: (quantity || "").trim(),
     category: category || "Alimentari",
     checked: false,
   };
@@ -156,7 +162,7 @@ function addShoppingItem(name, quantity, category) {
   renderShoppingList();
 }
 
-// Invio modulo per aggiungere articolo alla lista della spesa
+// Aggiunta articolo dal modulo
 shoppingForm.addEventListener("submit", function (e) {
   e.preventDefault();
   const name = shoppingItemNameInput.value;
@@ -169,7 +175,7 @@ shoppingForm.addEventListener("submit", function (e) {
   shoppingItemNameInput.focus();
 });
 
-// Spunta articolo nella lista della spesa
+// Spunta/Despunta articolo
 window.toggleShoppingItem = function (id) {
   shoppingList = shoppingList.map((item) => {
     if (item.id === id) {
@@ -181,36 +187,34 @@ window.toggleShoppingItem = function (id) {
   renderShoppingList();
 };
 
-// Elimina articolo dalla lista della spesa
+// Elimina articolo
 window.deleteShoppingItem = function (id) {
   shoppingList = shoppingList.filter((item) => item.id !== id);
   saveShoppingList();
   renderShoppingList();
 };
 
-// Cancella tutti gli articoli spuntati
+// Cancella spuntati
 clearCheckedShoppingBtn.addEventListener("click", function () {
   shoppingList = shoppingList.filter((item) => !item.checked);
   saveShoppingList();
   renderShoppingList();
 });
 
-// CONVERTI ARTICOLO DELLA SPESA IN SPESA REGISTRATA
+// Converti articolo della spesa in spesa pagata
 window.convertShoppingItemToExpense = function (id) {
   const item = shoppingList.find((i) => i.id === id);
   if (!item) return;
 
-  // 1. Passa alla scheda "2. Registro Spese"
+  // Passa al Registro Spese
   switchTab("expenses");
 
-  // 2. Precompila i campi nel registro spese
   descriptionInput.value = item.name;
   categorySelect.value = item.category || "Alimentari";
   quantityInput.value = 1;
   amountInput.value = "";
   amountInput.focus();
 
-  // 3. Spunta l'articolo nella lista come completato
   item.checked = true;
   saveShoppingList();
   renderShoppingList();
@@ -221,7 +225,7 @@ window.convertShoppingItemToExpense = function (id) {
 // ==============================================================================
 function renderFrequentDropdowns() {
   quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
-  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona un articolo da inserire in lista --</option>';
+  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona per aggiungere alla lista --</option>';
 
   frequentItems.forEach((item, index) => {
     const storeInfo = item.store ? ` (${item.store})` : "";
@@ -244,7 +248,7 @@ function saveFrequentItems() {
   localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
 }
 
-// Aggiungi al volo alla lista della spesa dall'elenco frequenti:
+// Aggiungi subito da frequenti alla lista della spesa
 shoppingQuickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
   if (selectedIndex === "") return;
@@ -256,7 +260,7 @@ shoppingQuickSelect.addEventListener("change", function () {
   }
 });
 
-// Seleziona acquisto frequente nel registro spese:
+// Compila campi nel registro spese da frequenti
 quickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
   if (selectedIndex === "") {
@@ -276,7 +280,7 @@ quickSelect.addEventListener("change", function () {
   }
 });
 
-// Elimina voce dagli acquisti frequenti:
+// Elimina voce frequente
 deleteFrequentBtn.addEventListener("click", function () {
   const selectedIndex = quickSelect.value;
   if (selectedIndex === "") return;
@@ -366,7 +370,6 @@ filterCategorySelect.addEventListener("change", function (event) {
   renderExpenses();
 });
 
-// Aggiunta nuova spesa nel registro
 expenseForm.addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -381,7 +384,7 @@ expenseForm.addEventListener("submit", function (event) {
     return;
   }
 
-  // Auto-apprendimento negli acquisti frequenti
+  // Auto-apprendimento
   const alreadyExists = frequentItems.some(
     (item) => item.desc.toLowerCase() === description.toLowerCase()
   );
@@ -432,7 +435,7 @@ clearAllBtn.addEventListener("click", function () {
 });
 
 // ==============================================================================
-// 7. AVVIO INIZIALE (La Lista della Spesa è la scheda predefinita all'avvio)
+// 7. AVVIO INIZIALE
 // ==============================================================================
 renderFrequentDropdowns();
 renderShoppingList();
