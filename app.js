@@ -4,7 +4,18 @@
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 let currentFilter = "ALL";
 
-// Lista iniziale degli acquisti frequenti (Pulita e corretta)
+// Nomi dei mesi in italiano
+const MONTH_NAMES = [
+  "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+];
+
+// Modalità Report attiva ("monthly" o "yearly")
+let reportMode = "monthly";
+let selectedReportMonth = ""; // formato "YYYY-MM"
+let selectedReportYear = "";  // formato "YYYY"
+
+// Lista iniziale degli acquisti frequenti
 const DEFAULT_FREQUENT_ITEMS = [
   { desc: "Pane", cat: "Alimentari", store: "Panetteria" },
   { desc: "Pasta", cat: "Alimentari", store: "Supermercato" },
@@ -19,23 +30,24 @@ const DEFAULT_FREQUENT_ITEMS = [
 
 let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
 
-// Pulizia automatica di eventuali caratteri corrotti ereditati in precedenza
 frequentItems = frequentItems.map(item => ({
   ...item,
   desc: item.desc.replace(/\uFFFD|\?/g, "è")
 }));
 
-// LISTA DELLA SPESA (Memorizzata nel browser)
+// LISTA DELLA SPESA
 let shoppingList = JSON.parse(localStorage.getItem("shopping_list")) || [];
 
 // ==============================================================================
 // 2. SELEZIONE DEGLI ELEMENTI HTML
 // ==============================================================================
-// Schede (Tabs)
+// Schede Principali
 const tabShoppingBtn = document.getElementById("tab-shopping-btn");
 const tabExpensesBtn = document.getElementById("tab-expenses-btn");
+const tabReportsBtn = document.getElementById("tab-reports-btn");
 const tabShoppingView = document.getElementById("tab-shopping-view");
 const tabExpensesView = document.getElementById("tab-expenses-view");
+const tabReportsView = document.getElementById("tab-reports-view");
 const shoppingBadge = document.getElementById("shopping-badge");
 
 // Form e Controlli Lista della Spesa
@@ -67,30 +79,90 @@ const emptyStateText = document.getElementById("empty-state-text");
 const clearAllBtn = document.getElementById("clear-all-btn");
 const filterCategorySelect = document.getElementById("filter-category");
 
+// Controlli Scheda Report e Storico
+const btnModeMonthly = document.getElementById("btn-mode-monthly");
+const btnModeYearly = document.getElementById("btn-mode-yearly");
+const sectionSelectMonth = document.getElementById("section-select-month");
+const sectionSelectYear = document.getElementById("section-select-year");
+const reportMonthSelect = document.getElementById("report-month-select");
+const reportYearSelect = document.getElementById("report-year-select");
+const reportSummaryLabel = document.getElementById("report-summary-label");
+const reportTotalAmount = document.getElementById("report-total-amount");
+const reportTotalCount = document.getElementById("report-total-count");
+const yearlyBreakdownSection = document.getElementById("yearly-breakdown-section");
+const yearlyMonthsGrid = document.getElementById("yearly-months-grid");
+const reportListTitle = document.getElementById("report-list-title");
+const reportExpenseList = document.getElementById("report-expense-list");
+const reportEmptyState = document.getElementById("report-empty-state");
+
 // ==============================================================================
 // 3. GESTIONE CAMBIO SCHEDA (TABS)
 // ==============================================================================
 function switchTab(target) {
+  // Rimuovi classe active da tutti i bottoni e viste
+  [tabShoppingBtn, tabExpensesBtn, tabReportsBtn].forEach(b => b.classList.remove("active"));
+  [tabShoppingView, tabExpensesView, tabReportsView].forEach(v => v.classList.remove("active"));
+
   if (target === "shopping") {
     tabShoppingBtn.classList.add("active");
-    tabExpensesBtn.classList.remove("active");
     tabShoppingView.classList.add("active");
-    tabExpensesView.classList.remove("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  } else {
+  } else if (target === "expenses") {
     tabExpensesBtn.classList.add("active");
-    tabShoppingBtn.classList.remove("active");
     tabExpensesView.classList.add("active");
-    tabShoppingView.classList.remove("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (target === "reports") {
+    tabReportsBtn.classList.add("active");
+    tabReportsView.classList.add("active");
+    renderReports();
   }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 tabShoppingBtn.addEventListener("click", () => switchTab("shopping"));
 tabExpensesBtn.addEventListener("click", () => switchTab("expenses"));
+tabReportsBtn.addEventListener("click", () => switchTab("reports"));
 
 // ==============================================================================
-// 4. GESTIONE DELLA LISTA DELLA SPESA (SCHEDA 1)
+// 4. FUNZIONE HELPER PER DATE SPESE
+// ==============================================================================
+// Ricava con certezza anno e mese da una spesa (sia dall'ID che dalla stringa data)
+function getExpenseDateInfo(expense) {
+  let dateObj = null;
+
+  if (expense.id && expense.id > 1000000000000) {
+    const d = new Date(expense.id);
+    if (!isNaN(d.getTime())) {
+      dateObj = d;
+    }
+  }
+
+  if (!dateObj && expense.date) {
+    const parts = expense.date.split('/');
+    if (parts.length === 3) {
+      dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  }
+
+  if (!dateObj || isNaN(dateObj.getTime())) {
+    dateObj = new Date();
+  }
+
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth(); // 0..11
+  const monthPadded = String(month + 1).padStart(2, "0");
+  const monthKey = `${year}-${monthPadded}`;
+
+  return {
+    year: String(year),
+    monthIndex: month,
+    monthKey: monthKey,
+    monthName: MONTH_NAMES[month],
+    dateFormatted: expense.date || dateObj.toLocaleDateString("it-IT")
+  };
+}
+
+// ==============================================================================
+// 5. GESTIONE DELLA LISTA DELLA SPESA (SCHEDA 1)
 // ==============================================================================
 function saveShoppingList() {
   localStorage.setItem("shopping_list", JSON.stringify(shoppingList));
@@ -163,7 +235,6 @@ function addShoppingItem(name, quantity, category) {
   renderShoppingList();
 }
 
-// Aggiunta articolo dal modulo
 shoppingForm.addEventListener("submit", function (e) {
   e.preventDefault();
   const name = shoppingItemNameInput.value;
@@ -178,7 +249,6 @@ shoppingForm.addEventListener("submit", function (e) {
   shoppingItemNameInput.focus();
 });
 
-// Spunta/Despunta articolo
 window.toggleShoppingItem = function (id) {
   shoppingList = shoppingList.map((item) => {
     if (item.id === id) {
@@ -190,26 +260,22 @@ window.toggleShoppingItem = function (id) {
   renderShoppingList();
 };
 
-// Elimina articolo
 window.deleteShoppingItem = function (id) {
   shoppingList = shoppingList.filter((item) => item.id !== id);
   saveShoppingList();
   renderShoppingList();
 };
 
-// Cancella spuntati
 clearCheckedShoppingBtn.addEventListener("click", function () {
   shoppingList = shoppingList.filter((item) => !item.checked);
   saveShoppingList();
   renderShoppingList();
 });
 
-// Converti articolo della spesa in spesa pagata
 window.convertShoppingItemToExpense = function (id) {
   const item = shoppingList.find((i) => i.id === id);
   if (!item) return;
 
-  // Passa al Registro Spese
   switchTab("expenses");
 
   descriptionInput.value = item.name;
@@ -224,11 +290,11 @@ window.convertShoppingItemToExpense = function (id) {
 };
 
 // ==============================================================================
-// 5. GESTIONE ACQUISTI FREQUENTI
+// 6. GESTIONE ACQUISTI FREQUENTI
 // ==============================================================================
 function renderFrequentDropdowns() {
   quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
-  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona per aggiungere alla lista --</option>';
+  shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona o elimina una voce frequente --</option>';
 
   frequentItems.forEach((item, index) => {
     const storeInfo = item.store ? ` (${item.store})` : "";
@@ -252,7 +318,6 @@ function saveFrequentItems() {
   localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
 }
 
-// Quando si seleziona una voce frequente nella lista della spesa:
 shoppingQuickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
   if (selectedIndex === "") {
@@ -263,7 +328,6 @@ shoppingQuickSelect.addEventListener("change", function () {
   deleteShoppingFrequentBtn.disabled = false;
   const item = frequentItems[selectedIndex];
   if (item) {
-    // Compila il modulo della spesa per facilitarne l'aggiunta
     shoppingItemNameInput.value = item.desc;
     shoppingCategorySelect.value = item.cat || "Alimentari";
     shoppingQuantityInput.value = "1";
@@ -271,7 +335,6 @@ shoppingQuickSelect.addEventListener("change", function () {
   }
 });
 
-// Elimina voce dagli acquisti frequenti (dalla scheda Lista della Spesa):
 deleteShoppingFrequentBtn.addEventListener("click", function () {
   const selectedIndex = shoppingQuickSelect.value;
   if (selectedIndex === "") return;
@@ -291,7 +354,6 @@ deleteShoppingFrequentBtn.addEventListener("click", function () {
   }
 });
 
-// Compila campi nel registro spese da frequenti
 quickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
   if (selectedIndex === "") {
@@ -311,7 +373,6 @@ quickSelect.addEventListener("change", function () {
   }
 });
 
-// Elimina voce frequente
 deleteFrequentBtn.addEventListener("click", function () {
   const selectedIndex = quickSelect.value;
   if (selectedIndex === "") return;
@@ -334,7 +395,7 @@ deleteFrequentBtn.addEventListener("click", function () {
 });
 
 // ==============================================================================
-// 6. GESTIONE REGISTRO SPESE (SCHEDA 2)
+// 7. GESTIONE REGISTRO SPESE (SCHEDA 2)
 // ==============================================================================
 function saveExpenses() {
   localStorage.setItem("expenses", JSON.stringify(expenses));
@@ -415,7 +476,6 @@ expenseForm.addEventListener("submit", function (event) {
     return;
   }
 
-  // Auto-apprendimento
   const alreadyExists = frequentItems.some(
     (item) => item.desc.toLowerCase() === description.toLowerCase()
   );
@@ -455,6 +515,9 @@ window.deleteExpense = function (id) {
   expenses = expenses.filter((expense) => expense.id !== id);
   saveExpenses();
   renderExpenses();
+  if (tabReportsView.classList.contains("active")) {
+    renderReports();
+  }
 };
 
 clearAllBtn.addEventListener("click", function () {
@@ -462,11 +525,197 @@ clearAllBtn.addEventListener("click", function () {
     expenses = [];
     saveExpenses();
     renderExpenses();
+    if (tabReportsView.classList.contains("active")) {
+      renderReports();
+    }
   }
 });
 
 // ==============================================================================
-// 7. AVVIO INIZIALE
+// 8. SCHEDA 3: STORICO E REPORT MENSILE / ANNUALE
+// ==============================================================================
+btnModeMonthly.addEventListener("click", function () {
+  reportMode = "monthly";
+  btnModeMonthly.classList.add("active");
+  btnModeYearly.classList.remove("active");
+  sectionSelectMonth.style.display = "block";
+  sectionSelectYear.style.display = "none";
+  yearlyBreakdownSection.style.display = "none";
+  renderReports();
+});
+
+btnModeYearly.addEventListener("click", function () {
+  reportMode = "yearly";
+  btnModeYearly.classList.add("active");
+  btnModeMonthly.classList.remove("active");
+  sectionSelectMonth.style.display = "none";
+  sectionSelectYear.style.display = "block";
+  yearlyBreakdownSection.style.display = "block";
+  renderReports();
+});
+
+reportMonthSelect.addEventListener("change", function () {
+  selectedReportMonth = this.value;
+  renderReportsData();
+});
+
+reportYearSelect.addEventListener("change", function () {
+  selectedReportYear = this.value;
+  renderReportsData();
+});
+
+function populateReportSelectors() {
+  // Ricaviamo tutti i mesi e gli anni presenti nelle spese
+  const monthsMap = new Map();
+  const yearsSet = new Set();
+
+  // Aggiungi sempre mese e anno correnti
+  const now = new Date();
+  const currentYearStr = String(now.getFullYear());
+  const currentMonthPadded = String(now.getMonth() + 1).padStart(2, "0");
+  const currentMonthKey = `${currentYearStr}-${currentMonthPadded}`;
+  monthsMap.set(currentMonthKey, `${MONTH_NAMES[now.getMonth()]} ${currentYearStr}`);
+  yearsSet.add(currentYearStr);
+
+  expenses.forEach(exp => {
+    const info = getExpenseDateInfo(exp);
+    monthsMap.set(info.monthKey, `${info.monthName} ${info.year}`);
+    yearsSet.add(info.year);
+  });
+
+  // Ordina i mesi dal più recente al più vecchio
+  const sortedMonthKeys = Array.from(monthsMap.keys()).sort().reverse();
+  reportMonthSelect.innerHTML = "";
+  sortedMonthKeys.forEach(key => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = monthsMap.get(key);
+    reportMonthSelect.appendChild(opt);
+  });
+
+  if (!selectedReportMonth || !monthsMap.has(selectedReportMonth)) {
+    selectedReportMonth = sortedMonthKeys[0] || currentMonthKey;
+  }
+  reportMonthSelect.value = selectedReportMonth;
+
+  // Ordina gli anni dal più recente al più vecchio
+  const sortedYears = Array.from(yearsSet).sort().reverse();
+  reportYearSelect.innerHTML = "";
+  sortedYears.forEach(yr => {
+    const opt = document.createElement("option");
+    opt.value = yr;
+    opt.textContent = `Anno ${yr}`;
+    reportYearSelect.appendChild(opt);
+  });
+
+  if (!selectedReportYear || !yearsSet.has(selectedReportYear)) {
+    selectedReportYear = sortedYears[0] || currentYearStr;
+  }
+  reportYearSelect.value = selectedReportYear;
+}
+
+function renderReports() {
+  populateReportSelectors();
+  renderReportsData();
+}
+
+function renderReportsData() {
+  reportExpenseList.innerHTML = "";
+
+  if (reportMode === "monthly") {
+    // FILTRO MENSILE
+    reportSummaryLabel.textContent = "Totale Mese";
+
+    const filtered = expenses.filter(exp => {
+      const info = getExpenseDateInfo(exp);
+      return info.monthKey === selectedReportMonth;
+    });
+
+    const monthLabel = reportMonthSelect.options[reportMonthSelect.selectedIndex]?.text || "Selezionato";
+    reportListTitle.textContent = `Spese di ${monthLabel}`;
+
+    const total = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+    reportTotalAmount.textContent = `€ ${total.toFixed(2)}`;
+    reportTotalCount.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      reportEmptyState.style.display = "block";
+    } else {
+      reportEmptyState.style.display = "none";
+      filtered.forEach(exp => renderReportItem(exp));
+    }
+
+  } else {
+    // FILTRO ANNUALE
+    reportSummaryLabel.textContent = `Totale Anno ${selectedReportYear}`;
+
+    const filtered = expenses.filter(exp => {
+      const info = getExpenseDateInfo(exp);
+      return info.year === selectedReportYear;
+    });
+
+    reportListTitle.textContent = `Tutte le spese dell'Anno ${selectedReportYear}`;
+
+    const total = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+    reportTotalAmount.textContent = `€ ${total.toFixed(2)}`;
+    reportTotalCount.textContent = filtered.length;
+
+    // Calcolo ripartizione per ciascun mese dell'anno
+    yearlyMonthsGrid.innerHTML = "";
+    MONTH_NAMES.forEach((mName, mIdx) => {
+      const monthExp = filtered.filter(exp => getExpenseDateInfo(exp).monthIndex === mIdx);
+      const mTotal = monthExp.reduce((a, c) => a + c.amount, 0);
+
+      const card = document.createElement("div");
+      card.className = `month-summary-card ${mTotal > 0 ? "has-expenses" : ""}`;
+      card.innerHTML = `
+        <span class="m-name">${mName}</span>
+        <span class="m-amount">€ ${mTotal.toFixed(2)}</span>
+      `;
+      yearlyMonthsGrid.appendChild(card);
+    });
+
+    if (filtered.length === 0) {
+      reportEmptyState.style.display = "block";
+    } else {
+      reportEmptyState.style.display = "none";
+      filtered.forEach(exp => renderReportItem(exp));
+    }
+  }
+}
+
+function renderReportItem(expense) {
+  const li = document.createElement("li");
+  li.className = "expense-item";
+
+  const qtyBadge = expense.quantity && expense.quantity > 1
+    ? `<span class="badge-qty">Qtà: ${expense.quantity}</span>`
+    : "";
+
+  const storeBadge = expense.store
+    ? `<span class="badge-store">🏬 ${expense.store}</span>`
+    : "";
+
+  li.innerHTML = `
+    <div class="expense-info">
+      <span class="expense-desc">${expense.description}</span>
+      <div class="expense-meta">
+        <span class="badge-tag">${expense.category}</span>
+        ${storeBadge}
+        ${qtyBadge}
+        <span>📅 ${expense.date}</span>
+      </div>
+    </div>
+    <div class="expense-right">
+      <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
+    </div>
+  `;
+
+  reportExpenseList.appendChild(li);
+}
+
+// ==============================================================================
+// 9. AVVIO INIZIALE
 // ==============================================================================
 renderFrequentDropdowns();
 renderShoppingList();

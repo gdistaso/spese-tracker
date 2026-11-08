@@ -11,27 +11,30 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Gestore Spese">
-  <link rel="stylesheet" href="style.css?v=3.0">
+  <link rel="stylesheet" href="style.css?v=4.0">
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Gestore Spese</h1>
-      <p class="subtitle">Prima pianifichi la spesa, poi registri i costi</p>
+      <p class="subtitle">Lista della spesa, registro costi e report mensili/annuali</p>
     </header>
 
-    <!-- Navigazione a Schede: La Lista della Spesa viene al 1° Posto -->
+    <!-- Navigazione a 3 Schede -->
     <nav class="nav-tabs">
       <button type="button" class="tab-btn active" id="tab-shopping-btn">
-        🛒 1. Lista della Spesa <span id="shopping-badge" class="badge-count">0</span>
+        🛒 Lista <span id="shopping-badge" class="badge-count">0</span>
       </button>
       <button type="button" class="tab-btn" id="tab-expenses-btn">
-        💰 2. Registro Spese
+        💰 Spese
+      </button>
+      <button type="button" class="tab-btn" id="tab-reports-btn">
+        📊 Storico
       </button>
     </nav>
 
     <!-- ===================================================================== -->
-    <!-- SCHEDA 1 (PRINCIPALE): LISTA DELLA SPESA                              -->
+    <!-- SCHEDA 1: LISTA DELLA SPESA                                           -->
     <!-- ===================================================================== -->
     <main id="tab-shopping-view" class="tab-view active">
       <section class="form-section">
@@ -72,7 +75,6 @@
           </button>
         </form>
 
-        <!-- Aggiunta rapida da acquisti frequenti con tasto elimina -->
         <div class="quick-select-group">
           <label for="shopping-quick-select">⚡ Oppure scegli da acquisti frequenti:</label>
           <div class="quick-select-row">
@@ -84,7 +86,6 @@
         </div>
       </section>
 
-      <!-- Elenco degli articoli da comprare -->
       <section class="list-section">
         <div class="list-header">
           <h2>Articoli da comprare</h2>
@@ -104,10 +105,9 @@
     </main>
 
     <!-- ===================================================================== -->
-    <!-- SCHEDA 2: REGISTRO DELLE SPESE EFFETTUATE                             -->
+    <!-- SCHEDA 2: REGISTRO DELLE SPESE SOSTENUTE                              -->
     <!-- ===================================================================== -->
     <main id="tab-expenses-view" class="tab-view">
-      <!-- Sezione Riepilogo / Totali -->
       <section class="summary-cards">
         <div class="card card-total">
           <span class="label" id="total-label">Totale Speso</span>
@@ -119,7 +119,6 @@
         </div>
       </section>
 
-      <!-- Modulo per inserire una spesa sostenuta -->
       <section class="form-section">
         <h2>Registra una Spesa</h2>
 
@@ -173,10 +172,9 @@
         </form>
       </section>
 
-      <!-- Cronologia Spese -->
       <section class="list-section">
         <div class="list-header">
-          <h2>Cronologia Spese</h2>
+          <h2>Ultime spese registrate</h2>
           <div class="list-controls">
             <select id="filter-category" class="filter-select" title="Filtra per categoria">
               <option value="ALL">🔍 Tutte le categorie</option>
@@ -197,8 +195,70 @@
         </div>
       </section>
     </main>
+
+    <!-- ===================================================================== -->
+    <!-- SCHEDA 3: STORICO, REPORT MENSILE E ANNUALE                           -->
+    <!-- ===================================================================== -->
+    <main id="tab-reports-view" class="tab-view">
+      <!-- Selettore modalità: Mensile vs Annuale -->
+      <section class="form-section">
+        <div class="report-mode-toggle">
+          <button type="button" class="btn-mode active" id="btn-mode-monthly">📅 Vista Mensile</button>
+          <button type="button" class="btn-mode" id="btn-mode-yearly">📆 Vista Annuale</button>
+        </div>
+
+        <!-- Selettore del Mese -->
+        <div id="section-select-month" class="form-group" style="margin-top: 14px; margin-bottom: 0;">
+          <label for="report-month-select">Seleziona il Mese da consultare:</label>
+          <select id="report-month-select">
+            <!-- Popolato dinamicamente da JavaScript -->
+          </select>
+        </div>
+
+        <!-- Selettore dell'Anno -->
+        <div id="section-select-year" class="form-group" style="margin-top: 14px; margin-bottom: 0; display: none;">
+          <label for="report-year-select">Seleziona l'Anno da consultare:</label>
+          <select id="report-year-select">
+            <!-- Popolato dinamicamente da JavaScript -->
+          </select>
+        </div>
+      </section>
+
+      <!-- Totali del Periodo Selezionato -->
+      <section class="summary-cards">
+        <div class="card card-total">
+          <span class="label" id="report-summary-label">Totale Mese</span>
+          <span class="amount" id="report-total-amount">€ 0.00</span>
+        </div>
+        <div class="card card-count">
+          <span class="label">Numero Spese</span>
+          <span class="amount" id="report-total-count">0</span>
+        </div>
+      </section>
+
+      <!-- Tabella / Ripartizione Mesi (Visibile solo in Vista Annuale) -->
+      <section id="yearly-breakdown-section" class="list-section" style="display: none;">
+        <h2>Ripartizione Mese per Mese</h2>
+        <div id="yearly-months-grid" class="yearly-months-grid">
+          <!-- Popolato dinamicamente -->
+        </div>
+      </section>
+
+      <!-- Elenco Dettagliato Spese del Periodo -->
+      <section class="list-section">
+        <div class="list-header">
+          <h2 id="report-list-title">Dettaglio Spese</h2>
+        </div>
+
+        <ul id="report-expense-list" class="expense-list"></ul>
+
+        <div id="report-empty-state" class="empty-state">
+          <p>Nessuna spesa trovata per questo periodo.</p>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

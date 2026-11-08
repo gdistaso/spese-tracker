@@ -41,30 +41,31 @@ header .subtitle {
   margin-top: 4px;
 }
 
-/* Navigazione a Schede (Tabs) */
+/* Navigazione a 3 Schede (Tabs) */
 .nav-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
   background-color: #e5e7eb;
   padding: 4px;
   border-radius: 12px;
 }
 
 .tab-btn {
-  padding: 12px 10px;
+  padding: 11px 6px;
   background-color: transparent;
   color: #4b5563;
   border: none;
   border-radius: 9px;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .tab-btn.active {
@@ -76,8 +77,8 @@ header .subtitle {
 .badge-count {
   background-color: #ef4444;
   color: #ffffff;
-  font-size: 0.72rem;
-  padding: 2px 7px;
+  font-size: 0.7rem;
+  padding: 2px 6px;
   border-radius: 10px;
   font-weight: 700;
 }
@@ -91,6 +92,71 @@ header .subtitle {
 
 .tab-view.active {
   display: flex;
+}
+
+/* Selettore modalità Report (Mensile / Annuale) */
+.report-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background-color: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.btn-mode {
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mode.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Griglia dei mesi nell'anno */
+.yearly-months-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.month-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.month-summary-card .m-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.month-summary-card .m-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.month-summary-card.has-expenses {
+  border-color: #93c5fd;
+  background: #eff6ff;
 }
 
 /* Card riepilogative (Totale e Conteggio) */
@@ -200,7 +266,7 @@ h2 {
   border-color: #e5e7eb;
 }
 
-/* Form e Campi di input: 16px per evitare zoom forzato su iPhone */
+/* Form e Campi di input */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -225,7 +291,7 @@ input, select {
   padding: 12px 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 16px; /* Importante: 16px evita lo zoom automatico e problemi di digitazione su smartphone */
+  font-size: 16px;
   outline: none;
   background-color: #ffffff;
   color: #111827;
@@ -458,11 +524,15 @@ button {
   }
 
   .nav-tabs {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
 
   .tab-btn {
-    padding: 10px 6px;
-    font-size: 0.85rem;
+    padding: 10px 4px;
+    font-size: 0.82rem;
+  }
+
+  .yearly-months-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
