@@ -11,7 +11,7 @@ body {
   color: #1f2937;
   display: flex;
   justify-content: center;
-  padding: 24px 12px;
+  padding: 20px 12px;
   min-height: 100vh;
 }
 
@@ -20,7 +20,7 @@ body {
   max-width: 620px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Intestazione */
@@ -40,11 +40,63 @@ header .subtitle {
   margin-top: 4px;
 }
 
+/* Navigazione a Schede (Tabs) */
+.nav-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background-color: #e5e7eb;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.tab-btn {
+  padding: 10px 12px;
+  background-color: transparent;
+  color: #4b5563;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background-color: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.badge-count {
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* Viste delle Schede */
+.tab-view {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-view.active {
+  display: flex;
+}
+
 /* Card riepilogative (Totale e Conteggio) */
 .summary-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .card {
@@ -54,7 +106,7 @@ header .subtitle {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .card .label {
@@ -90,9 +142,9 @@ h2 {
   color: #1f2937;
 }
 
-/* Elenco a discesa acquisti frequenti con pulsante elimina */
+/* Elenco a discesa acquisti frequenti */
 .quick-select-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   padding: 12px;
   background-color: #eff6ff;
   border: 1px dashed #93c5fd;
@@ -245,14 +297,14 @@ button {
 }
 
 /* Lista Spese */
-.expense-list {
+.expense-list, .shopping-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.expense-item {
+.expense-item, .shopping-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -263,24 +315,24 @@ button {
   transition: transform 0.15s ease, background-color 0.15s;
 }
 
-.expense-item:hover {
+.expense-item:hover, .shopping-item:hover {
   transform: translateX(2px);
   background: #f3f4f6;
 }
 
-.expense-info {
+.expense-info, .shopping-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.expense-desc {
+.expense-desc, .shopping-item-name {
   font-weight: 600;
   color: #111827;
   font-size: 0.95rem;
 }
 
-.expense-meta {
+.expense-meta, .shopping-meta {
   font-size: 0.78rem;
   color: #6b7280;
   display: flex;
@@ -314,10 +366,10 @@ button {
   font-weight: 600;
 }
 
-.expense-right {
+.expense-right, .shopping-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .expense-amount {
@@ -339,6 +391,51 @@ button {
   background: #fee2e2;
 }
 
+/* Stili specifici per la Lista della Spesa */
+.shopping-item {
+  border-left-color: #10b981;
+}
+
+.shopping-item.checked {
+  background-color: #f1f5f9;
+  border-left-color: #94a3b8;
+  opacity: 0.65;
+}
+
+.shopping-item.checked .shopping-item-name {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+.shopping-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shopping-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.btn-convert-expense {
+  padding: 6px 10px;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-convert-expense:hover {
+  background-color: #bfdbfe;
+}
+
 .empty-state {
   text-align: center;
   padding: 20px;
@@ -351,5 +448,14 @@ button {
   .form-row {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+
+  .nav-tabs {
+    font-size: 0.85rem;
+  }
+
+  .tab-btn {
+    padding: 8px 6px;
+    font-size: 0.85rem;
   }
 }

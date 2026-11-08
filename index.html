@@ -3,110 +3,184 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestore Spese Personali</title>
+  <title>Gestore Spese & Lista della Spesa</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Gestore Spese</h1>
-      <p class="subtitle">Il tuo assistente personale per le spese quotidiane</p>
+      <p class="subtitle">Il tuo assistente per le spese e la lista della spesa</p>
     </header>
 
-    <!-- Sezione Riepilogo / Totali -->
-    <section class="summary-cards">
-      <div class="card card-total">
-        <span class="label" id="total-label">Totale Speso</span>
-        <span class="amount" id="total-amount">€ 0.00</span>
-      </div>
-      <div class="card card-count">
-        <span class="label">Numero Spese</span>
-        <span class="amount" id="total-count">0</span>
-      </div>
-    </section>
+    <!-- Navigazione a Schede (Tabs) -->
+    <nav class="nav-tabs">
+      <button type="button" class="tab-btn active" id="tab-expenses-btn">
+        💰 Registro Spese
+      </button>
+      <button type="button" class="tab-btn" id="tab-shopping-btn">
+        🛒 Lista della Spesa <span id="shopping-badge" class="badge-count">0</span>
+      </button>
+    </nav>
 
-    <!-- Modulo per inserire una nuova spesa -->
-    <section class="form-section">
-      <h2>Aggiungi una Spesa</h2>
-
-      <!-- Elenco a discesa degli acquisti frequenti con pulsante di eliminazione -->
-      <div class="form-group quick-select-group">
-        <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
-        <div class="quick-select-row">
-          <select id="quick-select">
-            <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
-            <!-- Popolato dinamicamente da JavaScript -->
-          </select>
-          <button type="button" id="delete-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dall'elenco a discesa" disabled>🗑️</button>
+    <!-- ===================================================================== -->
+    <!-- SCHEDA 1: REGISTRO SPESE                                              -->
+    <!-- ===================================================================== -->
+    <main id="tab-expenses-view" class="tab-view active">
+      <!-- Sezione Riepilogo / Totali -->
+      <section class="summary-cards">
+        <div class="card card-total">
+          <span class="label" id="total-label">Totale Speso</span>
+          <span class="amount" id="total-amount">€ 0.00</span>
         </div>
-      </div>
-
-      <form id="expense-form">
-        <div class="form-group">
-          <label for="description">Descrizione articolo</label>
-          <input type="text" id="description" placeholder="Es. Pane, Pasta, Caffè..." required>
+        <div class="card card-count">
+          <span class="label">Numero Spese</span>
+          <span class="amount" id="total-count">0</span>
         </div>
+      </section>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="quantity">Quantità</label>
-            <input type="number" id="quantity" min="1" step="1" value="1" required>
-          </div>
+      <!-- Modulo per inserire una nuova spesa -->
+      <section class="form-section">
+        <h2>Aggiungi una Spesa</h2>
 
-          <div class="form-group">
-            <label for="store">Negozio / Fornitore</label>
-            <input type="text" id="store" placeholder="Es. Conad, Bar, Coop, Farmacia...">
+        <!-- Elenco a discesa degli acquisti frequenti -->
+        <div class="form-group quick-select-group">
+          <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
+          <div class="quick-select-row">
+            <select id="quick-select">
+              <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
+            </select>
+            <button type="button" id="delete-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dall'elenco a discesa" disabled>🗑️</button>
           </div>
         </div>
 
-        <div class="form-row">
+        <form id="expense-form">
           <div class="form-group">
-            <label for="amount">Importo (€)</label>
-            <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            <label for="description">Descrizione articolo</label>
+            <input type="text" id="description" placeholder="Es. Pane, Pasta, Caffè..." required>
           </div>
 
-          <div class="form-group">
-            <label for="category">Categoria</label>
-            <select id="category" required>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="quantity">Quantità</label>
+              <input type="number" id="quantity" min="1" step="1" value="1" required>
+            </div>
+
+            <div class="form-group">
+              <label for="store">Negozio / Fornitore</label>
+              <input type="text" id="store" placeholder="Es. Conad, Bar, Coop, Farmacia...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="amount">Importo (€)</label>
+              <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="category">Categoria</label>
+              <select id="category" required>
+                <option value="Alimentari">🛒 Alimentari</option>
+                <option value="Trasporti">🚗 Trasporti</option>
+                <option value="Svago">🍿 Svago</option>
+                <option value="Casa">🏠 Casa</option>
+                <option value="Altro">✨ Altro</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Aggiungi Spesa</button>
+        </form>
+      </section>
+
+      <!-- Elenco delle spese registrate con Filtro -->
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Cronologia Spese</h2>
+          <div class="list-controls">
+            <select id="filter-category" class="filter-select" title="Filtra per categoria">
+              <option value="ALL">🔍 Tutte le categorie</option>
               <option value="Alimentari">🛒 Alimentari</option>
               <option value="Trasporti">🚗 Trasporti</option>
               <option value="Svago">🍿 Svago</option>
               <option value="Casa">🏠 Casa</option>
               <option value="Altro">✨ Altro</option>
             </select>
+            <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
           </div>
         </div>
 
-        <button type="submit" class="btn-primary">Aggiungi Spesa</button>
-      </form>
-    </section>
+        <ul id="expense-list" class="expense-list"></ul>
 
-    <!-- Elenco delle spese registrate con Filtro -->
-    <section class="list-section">
-      <div class="list-header">
-        <h2>Cronologia Spese</h2>
-        <div class="list-controls">
-          <!-- Filtro per categoria -->
-          <select id="filter-category" class="filter-select" title="Filtra per categoria">
-            <option value="ALL">🔍 Tutte le categorie</option>
-            <option value="Alimentari">🛒 Alimentari</option>
-            <option value="Trasporti">🚗 Trasporti</option>
-            <option value="Svago">🍿 Svago</option>
-            <option value="Casa">🏠 Casa</option>
-            <option value="Altro">✨ Altro</option>
-          </select>
-          <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
+        <div id="empty-state" class="empty-state">
+          <p id="empty-state-text">Nessuna spesa registrata. Aggiungine una dal modulo sopra!</p>
         </div>
-      </div>
+      </section>
+    </main>
 
-      <ul id="expense-list" class="expense-list">
-        <!-- Elementi inseriti dinamicamente da JavaScript -->
-      </ul>
+    <!-- ===================================================================== -->
+    <!-- SCHEDA 2: LISTA DELLA SPESA                                           -->
+    <!-- ===================================================================== -->
+    <main id="tab-shopping-view" class="tab-view">
+      <!-- Modulo aggiunta articolo da comprare -->
+      <section class="form-section">
+        <h2>Cosa devi comprare?</h2>
 
-      <div id="empty-state" class="empty-state">
-        <p id="empty-state-text">Nessuna spesa registrata. Aggiungine una dal modulo sopra!</p>
-      </div>
-    </section>
+        <!-- Scorciatoia: aggiungi velocemente da acquisti frequenti -->
+        <div class="form-group quick-select-group">
+          <label for="shopping-quick-select">⚡ Aggiungi al volo da acquisti frequenti:</label>
+          <div class="quick-select-row">
+            <select id="shopping-quick-select">
+              <option value="">-- Seleziona un articolo da inserire in lista --</option>
+            </select>
+          </div>
+        </div>
+
+        <form id="shopping-form">
+          <div class="form-group">
+            <label for="shopping-item-name">Nuovo articolo</label>
+            <input type="text" id="shopping-item-name" placeholder="Es. Pomodori, Caffè, Detersivo..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="shopping-quantity">Quantità / Note</label>
+              <input type="text" id="shopping-quantity" placeholder="Es. 1kg, 2 bottiglie, 1 pacco...">
+            </div>
+
+            <div class="form-group">
+              <label for="shopping-category">Categoria</label>
+              <select id="shopping-category">
+                <option value="Alimentari">🛒 Alimentari</option>
+                <option value="Casa">🏠 Casa</option>
+                <option value="Svago">🍿 Svago</option>
+                <option value="Trasporti">🚗 Trasporti</option>
+                <option value="Altro">✨ Altro</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">➕ Aggiungi alla Lista della Spesa</button>
+        </form>
+      </section>
+
+      <!-- Elenco degli articoli da comprare -->
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Articoli da comprare</h2>
+          <div class="list-controls">
+            <button id="clear-checked-shopping-btn" class="btn-secondary" type="button">Cancella spuntati</button>
+          </div>
+        </div>
+
+        <ul id="shopping-list" class="shopping-list"></ul>
+
+        <div id="shopping-empty-state" class="empty-state">
+          <p>La tua lista della spesa è vuota! Aggiungi gli articoli che vuoi ricordare di comprare.</p>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="app.js"></script>
