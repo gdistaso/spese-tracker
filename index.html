@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestore Spese & Lista della Spesa</title>
-  <link rel="stylesheet" href="style.css?v=2.1">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gestore Spese">
+  <link rel="stylesheet" href="style.css?v=3.0">
 </head>
 <body>
   <div class="container">
@@ -65,13 +72,14 @@
           </button>
         </form>
 
-        <!-- Aggiunta rapida da acquisti frequenti -->
+        <!-- Aggiunta rapida da acquisti frequenti con tasto elimina -->
         <div class="quick-select-group">
           <label for="shopping-quick-select">⚡ Oppure scegli da acquisti frequenti:</label>
           <div class="quick-select-row">
             <select id="shopping-quick-select">
-              <option value="">-- Seleziona per aggiungere alla lista --</option>
+              <option value="">-- Seleziona o elimina una voce frequente --</option>
             </select>
+            <button type="button" id="delete-shopping-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dagli acquisti frequenti" disabled>🗑️</button>
           </div>
         </div>
       </section>
@@ -191,6 +199,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>

@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestore Spese & Lista della Spesa</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gestore Spese">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f3f4f6;
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      padding: 16px 12px;
+      min-height: 100vh;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    header .subtitle {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .nav-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background-color: #e5e7eb;
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .tab-btn {
+      padding: 12px 10px;
+      background-color: transparent;
+      color: #4b5563;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: #1d4ed8;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .badge-count {
+      background-color: #ef4444;
+      color: #ffffff;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .tab-view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-view.active {
+      display: flex;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: #6b7280;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card .amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2563eb;
+    }
+
+    .card-count .amount {
+      color: #059669;
+    }
+
+    .form-section, .list-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #1f2937;
+    }
+
+    .quick-select-group {
+      margin-top: 14px;
+      padding: 12px;
+      background-color: #eff6ff;
+      border: 1px dashed #93c5fd;
+      border-radius: 10px;
+    }
+
+    .quick-select-group label {
+      color: #1e40af;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .quick-select-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .quick-select-row select {
+      flex: 1;
+      background-color: #ffffff;
+      border-color: #93c5fd;
+      font-weight: 500;
+      color: #1e3a8a;
+    }
+
+    .btn-delete-frequent {
+      padding: 10px 12px;
+      background-color: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-delete-frequent:hover:not(:disabled) {
+      background-color: #fecaca;
+      border-color: #f87171;
+      transform: scale(1.05);
+    }
+
+    .btn-delete-frequent:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      background-color: #f3f4f6;
+      border-color: #e5e7eb;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      background-color: #ffffff;
+      color: #111827;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-secondary {
+      padding: 7px 11px;
+      background-color: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.82rem;
+    }
+
+    .btn-secondary:hover {
+      background-color: #fecaca;
+    }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .list-header h2 {
+      margin-bottom: 0;
+    }
+
+    .list-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-select {
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .expense-list, .shopping-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .expense-item, .shopping-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+      transition: transform 0.15s ease, background-color 0.15s;
+    }
+
+    .expense-item:hover, .shopping-item:hover {
+      transform: translateX(2px);
+      background: #f3f4f6;
+    }
+
+    .expense-info, .shopping-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .expense-desc, .shopping-item-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 1rem;
+    }
+
+    .expense-meta, .shopping-meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .badge-tag {
+      background: #e5e7eb;
+      color: #374151;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    .badge-store {
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    .badge-qty {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .expense-right, .shopping-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .expense-amount {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #111827;
+    }
+
+    .btn-delete {
+      background: transparent;
+      color: #9ca3af;
+      font-size: 1.2rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .btn-delete:hover {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+
+    .shopping-item {
+      border-left-color: #10b981;
+    }
+
+    .shopping-item.checked {
+      background-color: #f1f5f9;
+      border-left-color: #94a3b8;
+      opacity: 0.65;
+    }
+
+    .shopping-item.checked .shopping-item-name {
+      text-decoration: line-through;
+      color: #64748b;
+    }
+
+    .shopping-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .shopping-checkbox {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      accent-color: #10b981;
+      cursor: pointer;
+    }
+
+    .btn-convert-expense {
+      padding: 7px 11px;
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .btn-convert-expense:hover {
+      background-color: #bfdbfe;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #9ca3af;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .nav-tabs {
+        font-size: 0.85rem;
+      }
+
+      .tab-btn {
+        padding: 10px 6px;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Gestore Spese</h1>
+      <p class="subtitle">Prima pianifichi la spesa, poi registri i costi</p>
+    </header>
+
+    <nav class="nav-tabs">
+      <button type="button" class="tab-btn active" id="tab-shopping-btn">
+        🛒 1. Lista della Spesa <span id="shopping-badge" class="badge-count">0</span>
+      </button>
+      <button type="button" class="tab-btn" id="tab-expenses-btn">
+        💰 2. Registro Spese
+      </button>
+    </nav>
+
+    <!-- SCHEDA 1: LISTA DELLA SPESA -->
+    <main id="tab-shopping-view" class="tab-view active">
+      <section class="form-section">
+        <h2>📝 Aggiungi articolo alla lista</h2>
+
+        <form id="shopping-form">
+          <div class="form-group">
+            <label for="shopping-item-name">Cosa devi comprare?</label>
+            <input 
+              type="text" 
+              id="shopping-item-name" 
+              placeholder="Es. Pane, Latte, Mele, Detersivo..." 
+              required 
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="shopping-quantity">Quantità / Dettaglio (opzionale)</label>
+              <input type="text" id="shopping-quantity" placeholder="Es. 1kg, 2 pezzi, 1 pacco...">
+            </div>
+
+            <div class="form-group">
+              <label for="shopping-category">Categoria</label>
+              <select id="shopping-category">
+                <option value="Alimentari">🛒 Alimentari</option>
+                <option value="Casa">🏠 Casa</option>
+                <option value="Svago">🍿 Svago</option>
+                <option value="Trasporti">🚗 Trasporti</option>
+                <option value="Altro">✨ Altro</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-add-shopping">
+            ➕ Aggiungi alla Lista
+          </button>
+        </form>
+
+        <div class="quick-select-group">
+          <label for="shopping-quick-select">⚡ Oppure scegli da acquisti frequenti:</label>
+          <div class="quick-select-row">
+            <select id="shopping-quick-select">
+              <option value="">-- Seleziona o elimina una voce frequente --</option>
+            </select>
+            <button type="button" id="delete-shopping-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dagli acquisti frequenti" disabled>🗑️</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Articoli da comprare</h2>
+          <div class="list-controls">
+            <button id="clear-checked-shopping-btn" class="btn-secondary" type="button" style="display:none;">
+              Cancella spuntati
+            </button>
+          </div>
+        </div>
+
+        <ul id="shopping-list" class="shopping-list"></ul>
+
+        <div id="shopping-empty-state" class="empty-state">
+          <p>La tua lista della spesa è vuota! Scrivi un articolo sopra e premi <strong>"Aggiungi alla Lista"</strong>.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- SCHEDA 2: REGISTRO SPESE -->
+    <main id="tab-expenses-view" class="tab-view">
+      <section class="summary-cards">
+        <div class="card card-total">
+          <span class="label" id="total-label">Totale Speso</span>
+          <span class="amount" id="total-amount">€ 0.00</span>
+        </div>
+        <div class="card card-count">
+          <span class="label">Numero Spese</span>
+          <span class="amount" id="total-count">0</span>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Registra una Spesa</h2>
+
+        <div class="form-group quick-select-group">
+          <label for="quick-select">⚡ Acquisto frequente (seleziona per compilare):</label>
+          <div class="quick-select-row">
+            <select id="quick-select">
+              <option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>
+            </select>
+            <button type="button" id="delete-frequent-btn" class="btn-delete-frequent" title="Elimina questa voce dall'elenco a discesa" disabled>🗑️</button>
+          </div>
+        </div>
+
+        <form id="expense-form">
+          <div class="form-group">
+            <label for="description">Descrizione articolo</label>
+            <input type="text" id="description" placeholder="Es. Pane, Pasta, Caffè..." required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="quantity">Quantità</label>
+              <input type="number" id="quantity" min="1" step="1" value="1" required>
+            </div>
+
+            <div class="form-group">
+              <label for="store">Negozio / Fornitore</label>
+              <input type="text" id="store" placeholder="Es. Conad, Bar, Coop, Farmacia...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="amount">Importo pagato (€)</label>
+              <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="category">Categoria</label>
+              <select id="category" required>
+                <option value="Alimentari">🛒 Alimentari</option>
+                <option value="Trasporti">🚗 Trasporti</option>
+                <option value="Svago">🍿 Svago</option>
+                <option value="Casa">🏠 Casa</option>
+                <option value="Altro">✨ Altro</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Salva Spesa nel Registro</button>
+        </form>
+      </section>
+
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Cronologia Spese</h2>
+          <div class="list-controls">
+            <select id="filter-category" class="filter-select" title="Filtra per categoria">
+              <option value="ALL">🔍 Tutte le categorie</option>
+              <option value="Alimentari">🛒 Alimentari</option>
+              <option value="Trasporti">🚗 Trasporti</option>
+              <option value="Svago">🍿 Svago</option>
+              <option value="Casa">🏠 Casa</option>
+              <option value="Altro">✨ Altro</option>
+            </select>
+            <button id="clear-all-btn" class="btn-secondary" type="button">Svuota tutto</button>
+          </div>
+        </div>
+
+        <ul id="expense-list" class="expense-list"></ul>
+
+        <div id="empty-state" class="empty-state">
+          <p id="empty-state-text">Nessuna spesa registrata. Aggiungine una dal modulo sopra!</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    let currentFilter = "ALL";
+
+    const DEFAULT_FREQUENT_ITEMS = [
+      { desc: "Pane", cat: "Alimentari", store: "Panetteria" },
+      { desc: "Pasta", cat: "Alimentari", store: "Supermercato" },
+      { desc: "Frutta e Verdura", cat: "Alimentari", store: "Fruttivendolo" },
+      { desc: "Latte e Uova", cat: "Alimentari", store: "Supermercato" },
+      { desc: "Caffè al bar", cat: "Svago", store: "Bar" },
+      { desc: "Pizza", cat: "Svago", store: "Pizzeria" },
+      { desc: "Biglietto Bus / Metro", cat: "Trasporti", store: "Tabacchi" },
+      { desc: "Carburante", cat: "Trasporti", store: "Distributore" },
+      { desc: "Farmaci", cat: "Altro", store: "Farmacia" },
+    ];
+
+    let frequentItems = JSON.parse(localStorage.getItem("frequent_items")) || DEFAULT_FREQUENT_ITEMS;
+
+    frequentItems = frequentItems.map(item => ({
+      ...item,
+      desc: item.desc.replace(/\uFFFD|\?/g, "è")
+    }));
+
+    let shoppingList = JSON.parse(localStorage.getItem("shopping_list")) || [];
+
+    const tabShoppingBtn = document.getElementById("tab-shopping-btn");
+    const tabExpensesBtn = document.getElementById("tab-expenses-btn");
+    const tabShoppingView = document.getElementById("tab-shopping-view");
+    const tabExpensesView = document.getElementById("tab-expenses-view");
+    const shoppingBadge = document.getElementById("shopping-badge");
+
+    const shoppingForm = document.getElementById("shopping-form");
+    const shoppingItemNameInput = document.getElementById("shopping-item-name");
+    const shoppingQuantityInput = document.getElementById("shopping-quantity");
+    const shoppingCategorySelect = document.getElementById("shopping-category");
+    const shoppingQuickSelect = document.getElementById("shopping-quick-select");
+    const deleteShoppingFrequentBtn = document.getElementById("delete-shopping-frequent-btn");
+    const shoppingListElement = document.getElementById("shopping-list");
+    const shoppingEmptyState = document.getElementById("shopping-empty-state");
+    const clearCheckedShoppingBtn = document.getElementById("clear-checked-shopping-btn");
+
+    const expenseForm = document.getElementById("expense-form");
+    const quickSelect = document.getElementById("quick-select");
+    const deleteFrequentBtn = document.getElementById("delete-frequent-btn");
+    const descriptionInput = document.getElementById("description");
+    const quantityInput = document.getElementById("quantity");
+    const storeInput = document.getElementById("store");
+    const amountInput = document.getElementById("amount");
+    const categorySelect = document.getElementById("category");
+    const expenseList = document.getElementById("expense-list");
+    const totalAmountElement = document.getElementById("total-amount");
+    const totalCountElement = document.getElementById("total-count");
+    const totalLabelElement = document.getElementById("total-label");
+    const emptyStateElement = document.getElementById("empty-state");
+    const emptyStateText = document.getElementById("empty-state-text");
+    const clearAllBtn = document.getElementById("clear-all-btn");
+    const filterCategorySelect = document.getElementById("filter-category");
+
+    function switchTab(target) {
+      if (target === "shopping") {
+        tabShoppingBtn.classList.add("active");
+        tabExpensesBtn.classList.remove("active");
+        tabShoppingView.classList.add("active");
+        tabExpensesView.classList.remove("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        tabExpensesBtn.classList.add("active");
+        tabShoppingBtn.classList.remove("active");
+        tabExpensesView.classList.add("active");
+        tabShoppingView.classList.remove("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    tabShoppingBtn.addEventListener("click", () => switchTab("shopping"));
+    tabExpensesBtn.addEventListener("click", () => switchTab("expenses"));
+
+    function saveShoppingList() {
+      localStorage.setItem("shopping_list", JSON.stringify(shoppingList));
+    }
+
+    function updateShoppingBadge() {
+      const unboughtCount = shoppingList.filter((item) => !item.checked).length;
+      shoppingBadge.textContent = unboughtCount;
+      shoppingBadge.style.display = unboughtCount > 0 ? "inline-block" : "none";
+    }
+
+    function renderShoppingList() {
+      shoppingListElement.innerHTML = "";
+
+      if (shoppingList.length === 0) {
+        shoppingEmptyState.style.display = "block";
+        clearCheckedShoppingBtn.style.display = "none";
+      } else {
+        shoppingEmptyState.style.display = "none";
+        const hasChecked = shoppingList.some((item) => item.checked);
+        clearCheckedShoppingBtn.style.display = hasChecked ? "inline-block" : "none";
+      }
+
+      shoppingList.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = `shopping-item ${item.checked ? "checked" : ""}`;
+
+        const qtyBadge = item.quantity ? `<span class="badge-qty">${item.quantity}</span>` : "";
+        const catBadge = item.category ? `<span class="badge-tag">${item.category}</span>` : "";
+
+        li.innerHTML = `
+          <div class="shopping-left">
+            <input type="checkbox" class="shopping-checkbox" ${item.checked ? "checked" : ""} onchange="toggleShoppingItem(${item.id})">
+            <div class="shopping-info">
+              <span class="shopping-item-name">${item.name}</span>
+              <div class="shopping-meta">
+                ${catBadge}
+                ${qtyBadge}
+              </div>
+            </div>
+          </div>
+          <div class="shopping-right">
+            <button type="button" class="btn-convert-expense" title="Registra come spesa pagata" onclick="convertShoppingItemToExpense(${item.id})">
+              💰 Registra
+            </button>
+            <button type="button" class="btn-delete" title="Elimina dalla lista" onclick="deleteShoppingItem(${item.id})">✕</button>
+          </div>
+        `;
+
+        shoppingListElement.appendChild(li);
+      });
+
+      updateShoppingBadge();
+    }
+
+    function addShoppingItem(name, quantity, category) {
+      const cleanName = (name || "").trim();
+      if (!cleanName) return;
+
+      const newItem = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        name: cleanName,
+        quantity: (quantity || "").trim(),
+        category: category || "Alimentari",
+        checked: false,
+      };
+
+      shoppingList.unshift(newItem);
+      saveShoppingList();
+      renderShoppingList();
+    }
+
+    shoppingForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = shoppingItemNameInput.value;
+      const quantity = shoppingQuantityInput.value;
+      const category = shoppingCategorySelect.value;
+
+      addShoppingItem(name, quantity, category);
+
+      shoppingForm.reset();
+      shoppingQuickSelect.value = "";
+      deleteShoppingFrequentBtn.disabled = true;
+      shoppingItemNameInput.focus();
+    });
+
+    window.toggleShoppingItem = function (id) {
+      shoppingList = shoppingList.map((item) => {
+        if (item.id === id) {
+          return { ...item, checked: !item.checked };
+        }
+        return item;
+      });
+      saveShoppingList();
+      renderShoppingList();
+    };
+
+    window.deleteShoppingItem = function (id) {
+      shoppingList = shoppingList.filter((item) => item.id !== id);
+      saveShoppingList();
+      renderShoppingList();
+    };
+
+    clearCheckedShoppingBtn.addEventListener("click", function () {
+      shoppingList = shoppingList.filter((item) => !item.checked);
+      saveShoppingList();
+      renderShoppingList();
+    });
+
+    window.convertShoppingItemToExpense = function (id) {
+      const item = shoppingList.find((i) => i.id === id);
+      if (!item) return;
+
+      switchTab("expenses");
+
+      descriptionInput.value = item.name;
+      categorySelect.value = item.category || "Alimentari";
+      quantityInput.value = 1;
+      amountInput.value = "";
+      amountInput.focus();
+
+      item.checked = true;
+      saveShoppingList();
+      renderShoppingList();
+    };
+
+    function renderFrequentDropdowns() {
+      quickSelect.innerHTML = '<option value="">-- Seleziona o inserisci una nuova spesa sotto --</option>';
+      shoppingQuickSelect.innerHTML = '<option value="">-- Seleziona per aggiungere alla lista --</option>';
+
+      frequentItems.forEach((item, index) => {
+        const storeInfo = item.store ? ` (${item.store})` : "";
+
+        const opt1 = document.createElement("option");
+        opt1.value = index;
+        opt1.textContent = `${item.desc}${storeInfo} [${item.cat}]`;
+        quickSelect.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = index;
+        opt2.textContent = `➕ ${item.desc} [${item.cat}]`;
+        shoppingQuickSelect.appendChild(opt2);
+      });
+
+      deleteFrequentBtn.disabled = true;
+      deleteShoppingFrequentBtn.disabled = true;
+    }
+
+    function saveFrequentItems() {
+      localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
+    }
+
+    shoppingQuickSelect.addEventListener("change", function () {
+      const selectedIndex = this.value;
+      if (selectedIndex === "") {
+        deleteShoppingFrequentBtn.disabled = true;
+        return;
+      }
+
+      deleteShoppingFrequentBtn.disabled = false;
+      const item = frequentItems[selectedIndex];
+      if (item) {
+        shoppingItemNameInput.value = item.desc;
+        shoppingCategorySelect.value = item.cat || "Alimentari";
+        shoppingQuantityInput.value = "1";
+        shoppingItemNameInput.focus();
+      }
+    });
+
+    deleteShoppingFrequentBtn.addEventListener("click", function () {
+      const selectedIndex = shoppingQuickSelect.value;
+      if (selectedIndex === "") return;
+
+      const itemToDelete = frequentItems[selectedIndex];
+      if (!itemToDelete) return;
+
+      if (confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`)) {
+        frequentItems.splice(selectedIndex, 1);
+        saveFrequentItems();
+        renderFrequentDropdowns();
+
+        if (shoppingItemNameInput.value === itemToDelete.desc) {
+          shoppingItemNameInput.value = "";
+          shoppingQuantityInput.value = "";
+        }
+      }
+    });
+
+    quickSelect.addEventListener("change", function () {
+      const selectedIndex = this.value;
+      if (selectedIndex === "") {
+        deleteFrequentBtn.disabled = true;
+        return;
+      }
+
+      deleteFrequentBtn.disabled = false;
+      const selectedItem = frequentItems[selectedIndex];
+      if (selectedItem) {
+        descriptionInput.value = selectedItem.desc;
+        categorySelect.value = selectedItem.cat;
+        storeInput.value = selectedItem.store || "";
+        quantityInput.value = 1;
+        amountInput.value = "";
+        amountInput.focus();
+      }
+    });
+
+    deleteFrequentBtn.addEventListener("click", function () {
+      const selectedIndex = quickSelect.value;
+      if (selectedIndex === "") return;
+
+      const itemToDelete = frequentItems[selectedIndex];
+      if (!itemToDelete) return;
+
+      if (confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`)) {
+        frequentItems.splice(selectedIndex, 1);
+        saveFrequentItems();
+        renderFrequentDropdowns();
+
+        if (descriptionInput.value === itemToDelete.desc) {
+          descriptionInput.value = "";
+          storeInput.value = "";
+          amountInput.value = "";
+          quantityInput.value = 1;
+        }
+      }
+    });
+
+    function saveExpenses() {
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+    }
+
+    function renderExpenses() {
+      expenseList.innerHTML = "";
+
+      const displayedExpenses = currentFilter === "ALL"
+        ? expenses
+        : expenses.filter((e) => e.category === currentFilter);
+
+      const total = displayedExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+      totalLabelElement.textContent = currentFilter === "ALL" ? "Totale Speso" : `Totale (${currentFilter})`;
+      totalAmountElement.textContent = `€ ${total.toFixed(2)}`;
+      totalCountElement.textContent = displayedExpenses.length;
+
+      if (displayedExpenses.length === 0) {
+        emptyStateElement.style.display = "block";
+        emptyStateText.textContent = currentFilter === "ALL"
+          ? "Nessuna spesa registrata. Aggiungine una dal modulo sopra!"
+          : `Nessuna spesa trovata nella categoria "${currentFilter}".`;
+        clearAllBtn.style.display = expenses.length > 0 ? "inline-block" : "none";
+      } else {
+        emptyStateElement.style.display = "none";
+        clearAllBtn.style.display = "inline-block";
+      }
+
+      displayedExpenses.forEach((expense) => {
+        const li = document.createElement("li");
+        li.className = "expense-item";
+
+        const qtyBadge = expense.quantity && expense.quantity > 1
+          ? `<span class="badge-qty">Qtà: ${expense.quantity}</span>`
+          : "";
+
+        const storeBadge = expense.store
+          ? `<span class="badge-store">🏬 ${expense.store}</span>`
+          : "";
+
+        li.innerHTML = `
+          <div class="expense-info">
+            <span class="expense-desc">${expense.description}</span>
+            <div class="expense-meta">
+              <span class="badge-tag">${expense.category}</span>
+              ${storeBadge}
+              ${qtyBadge}
+              <span>📅 ${expense.date}</span>
+            </div>
+          </div>
+          <div class="expense-right">
+            <span class="expense-amount">€ ${expense.amount.toFixed(2)}</span>
+            <button type="button" class="btn-delete" title="Elimina spesa" onclick="deleteExpense(${expense.id})">✕</button>
+          </div>
+        `;
+
+        expenseList.appendChild(li);
+      });
+    }
+
+    filterCategorySelect.addEventListener("change", function (event) {
+      currentFilter = event.target.value;
+      renderExpenses();
+    });
+
+    expenseForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const description = descriptionInput.value.trim();
+      const quantity = parseInt(quantityInput.value, 10) || 1;
+      const store = storeInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+      const category = categorySelect.value;
+
+      if (!description || isNaN(amount) || amount <= 0) {
+        alert("Inserisci una descrizione e un importo valido!");
+        return;
+      }
+
+      const alreadyExists = frequentItems.some(
+        (item) => item.desc.toLowerCase() === description.toLowerCase()
+      );
+
+      if (!alreadyExists) {
+        frequentItems.push({
+          desc: description,
+          cat: category,
+          store: store,
+        });
+        saveFrequentItems();
+        renderFrequentDropdowns();
+      }
+
+      const newExpense = {
+        id: Date.now(),
+        description: description,
+        quantity: quantity,
+        store: store,
+        amount: amount,
+        category: category,
+        date: new Date().toLocaleDateString("it-IT"),
+      };
+
+      expenses.unshift(newExpense);
+      saveExpenses();
+      renderExpenses();
+
+      expenseForm.reset();
+      quantityInput.value = 1;
+      quickSelect.value = "";
+      deleteFrequentBtn.disabled = true;
+      descriptionInput.focus();
+    });
+
+    window.deleteExpense = function (id) {
+      expenses = expenses.filter((expense) => expense.id !== id);
+      saveExpenses();
+      renderExpenses();
+    };
+
+    clearAllBtn.addEventListener("click", function () {
+      if (confirm("Sei sicuro di voler cancellare tutte le spese registrate?")) {
+        expenses = [];
+        saveExpenses();
+        renderExpenses();
+      }
+    });
+
+    renderFrequentDropdowns();
+    renderShoppingList();
+    renderExpenses();
+  </script>
+</body>
+</html>

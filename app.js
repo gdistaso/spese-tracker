@@ -44,6 +44,7 @@ const shoppingItemNameInput = document.getElementById("shopping-item-name");
 const shoppingQuantityInput = document.getElementById("shopping-quantity");
 const shoppingCategorySelect = document.getElementById("shopping-category");
 const shoppingQuickSelect = document.getElementById("shopping-quick-select");
+const deleteShoppingFrequentBtn = document.getElementById("delete-shopping-frequent-btn");
 const shoppingListElement = document.getElementById("shopping-list");
 const shoppingEmptyState = document.getElementById("shopping-empty-state");
 const clearCheckedShoppingBtn = document.getElementById("clear-checked-shopping-btn");
@@ -172,6 +173,8 @@ shoppingForm.addEventListener("submit", function (e) {
   addShoppingItem(name, quantity, category);
 
   shoppingForm.reset();
+  shoppingQuickSelect.value = "";
+  deleteShoppingFrequentBtn.disabled = true;
   shoppingItemNameInput.focus();
 });
 
@@ -242,21 +245,49 @@ function renderFrequentDropdowns() {
   });
 
   deleteFrequentBtn.disabled = true;
+  deleteShoppingFrequentBtn.disabled = true;
 }
 
 function saveFrequentItems() {
   localStorage.setItem("frequent_items", JSON.stringify(frequentItems));
 }
 
-// Aggiungi subito da frequenti alla lista della spesa
+// Quando si seleziona una voce frequente nella lista della spesa:
 shoppingQuickSelect.addEventListener("change", function () {
   const selectedIndex = this.value;
-  if (selectedIndex === "") return;
+  if (selectedIndex === "") {
+    deleteShoppingFrequentBtn.disabled = true;
+    return;
+  }
 
+  deleteShoppingFrequentBtn.disabled = false;
   const item = frequentItems[selectedIndex];
   if (item) {
-    addShoppingItem(item.desc, "1", item.cat);
-    this.value = "";
+    // Compila il modulo della spesa per facilitarne l'aggiunta
+    shoppingItemNameInput.value = item.desc;
+    shoppingCategorySelect.value = item.cat || "Alimentari";
+    shoppingQuantityInput.value = "1";
+    shoppingItemNameInput.focus();
+  }
+});
+
+// Elimina voce dagli acquisti frequenti (dalla scheda Lista della Spesa):
+deleteShoppingFrequentBtn.addEventListener("click", function () {
+  const selectedIndex = shoppingQuickSelect.value;
+  if (selectedIndex === "") return;
+
+  const itemToDelete = frequentItems[selectedIndex];
+  if (!itemToDelete) return;
+
+  if (confirm(`Vuoi rimuovere "${itemToDelete.desc}" dall'elenco degli acquisti frequenti?`)) {
+    frequentItems.splice(selectedIndex, 1);
+    saveFrequentItems();
+    renderFrequentDropdowns();
+
+    if (shoppingItemNameInput.value === itemToDelete.desc) {
+      shoppingItemNameInput.value = "";
+      shoppingQuantityInput.value = "";
+    }
   }
 });
 
