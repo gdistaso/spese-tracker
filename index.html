@@ -336,8 +336,33 @@
             <div id="tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
           </div>
 
+          <div class="recurrence-box">
+            <label class="checkbox-inline" for="expense-recurring-toggle" style="margin-bottom: 0;">
+              <input type="checkbox" id="expense-recurring-toggle">
+              <span>🔄 Spesa ricorrente (abbonamento / pagamento fisso)</span>
+            </label>
+            <div id="expense-recurrence-group" class="recurrence-select-row" style="display: none;">
+              <label for="expense-recurrence-freq">Frequenza automatica</label>
+              <select id="expense-recurrence-freq">
+                <option value="daily">Giornaliera (ogni giorno)</option>
+                <option value="weekly">Settimanale (ogni settimana)</option>
+                <option value="monthly" selected>Mensile (ogni mese)</option>
+              </select>
+            </div>
+          </div>
+
           <button type="submit" class="btn-primary">Salva Spesa nel Registro</button>
         </form>
+      </section>
+
+      <section class="list-section" id="recurring-expenses-section" style="display: none;">
+        <div class="list-header">
+          <div>
+            <h2>🔄 Spese Ricorrenti Attive</h2>
+            <p class="section-hint">Vengono registrate automaticamente alla scadenza della frequenza impostata.</p>
+          </div>
+        </div>
+        <ul id="recurring-expenses-list" class="compact-list"></ul>
       </section>
 
       <section class="list-section">
@@ -456,8 +481,10 @@
               <label for="reminder-recurrence">Ricorrenza</label>
               <select id="reminder-recurrence">
                 <option value="Nessuna">Nessuna (una tantum)</option>
-                <option value="Mensile">Mensile</option>
-                <option value="Annuale">Annuale</option>
+                <option value="Mensile">Mensile (ogni mese)</option>
+                <option value="Bimensile">Bimensile (ogni 2 mesi)</option>
+                <option value="Annuale">Annuale (ogni anno)</option>
+                <option value="Decennale">Decennale (ogni 10 anni)</option>
               </select>
             </div>
 
@@ -721,6 +748,21 @@
           <label for="quick-expense-tags">Tag personalizzati (opzionali)</label>
           <input type="text" id="quick-expense-tags" placeholder="Es. urgente, rimborso, lavoro..." autocomplete="off">
           <div id="quick-expense-tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
+        </div>
+
+        <div class="recurrence-box">
+          <label class="checkbox-inline" for="quick-expense-recurring-toggle" style="margin-bottom: 0;">
+            <input type="checkbox" id="quick-expense-recurring-toggle">
+            <span>🔄 Spesa ricorrente (abbonamento / fisso)</span>
+          </label>
+          <div id="quick-expense-recurrence-group" class="recurrence-select-row" style="display: none;">
+            <label for="quick-expense-recurrence-freq">Frequenza automatica</label>
+            <select id="quick-expense-recurrence-freq">
+              <option value="daily">Giornaliera (ogni giorno)</option>
+              <option value="weekly">Settimanale (ogni settimana)</option>
+              <option value="monthly" selected>Mensile (ogni mese)</option>
+            </select>
+          </div>
         </div>
 
         <div class="modal-actions" style="margin-top: 8px;">

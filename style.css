@@ -1315,6 +1315,7 @@ button {
 
 .chart-canvas-wrap {
   width: 100%;
+  min-height: 270px;
 }
 
 .chart-empty-state {
@@ -1431,6 +1432,30 @@ button {
   color: #1d4ed8;
   font-weight: 600;
 }
+
+/* Ricorrenza spese (abbonamenti e pagamenti fissi) */
+.recurrence-box {
+  padding: 10px 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.recurrence-select-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.expense-recurrence-label {
+  color: #047857;
+  font-weight: 600;
+}
+
 
 
 

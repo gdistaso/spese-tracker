@@ -91,7 +91,7 @@ function ReportsBarChart({ mode, monthlyData, yearlyData, categories }) {
 
     return (
       <div className="chart-canvas-wrap">
-        <ResponsiveContainer width="100%" height={270}>
+        <ResponsiveContainer width="100%" height={270} minWidth={200} initialDimension={{ width: 320, height: 270 }}>
           <BarChart
             data={monthlyData}
             margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
@@ -140,7 +140,7 @@ function ReportsBarChart({ mode, monthlyData, yearlyData, categories }) {
 
   return (
     <div className="chart-canvas-wrap">
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={300} minWidth={200} initialDimension={{ width: 320, height: 300 }}>
         <BarChart
           data={yearlyData}
           margin={{ top: 12, right: 12, left: 0, bottom: 8 }}

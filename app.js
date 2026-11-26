@@ -90,6 +90,7 @@ let currentFilter = "ALL";
 let currentTagFilter = "ALL";
 let customTags = JSON.parse(localStorage.getItem("custom_tags")) || [];
 const DEFAULT_SUGGESTED_TAGS = ["urgente", "rimborso", "lavoro", "weekend"];
+let recurringExpenses = JSON.parse(localStorage.getItem("recurring_expenses")) || [];
 
 // Nomi dei mesi e giorni in italiano
 const MONTH_NAMES = [
@@ -202,6 +203,11 @@ const amountInput = document.getElementById("amount");
 const categorySelect = document.getElementById("category");
 const tagsInput = document.getElementById("tags");
 const tagSuggestionsEl = document.getElementById("tag-suggestions");
+const expenseRecurringToggle = document.getElementById("expense-recurring-toggle");
+const expenseRecurrenceGroup = document.getElementById("expense-recurrence-group");
+const expenseRecurrenceFreq = document.getElementById("expense-recurrence-freq");
+const recurringExpensesSection = document.getElementById("recurring-expenses-section");
+const recurringExpensesList = document.getElementById("recurring-expenses-list");
 const expenseList = document.getElementById("expense-list");
 const totalAmountElement = document.getElementById("total-amount");
 const totalCountElement = document.getElementById("total-count");
@@ -428,11 +434,19 @@ function addRecurrenceToDate(dateStr, recurrence) {
   const dt = parseLocalDate(dateStr);
   if (!dt) return "";
   const day = dt.getDate();
+  const origMonth = dt.getMonth();
   if (recurrence === "Mensile") {
     dt.setMonth(dt.getMonth() + 1);
     if (dt.getDate() < day) dt.setDate(0);
+  } else if (recurrence === "Bimensile") {
+    dt.setMonth(dt.getMonth() + 2);
+    if (dt.getDate() < day) dt.setDate(0);
   } else if (recurrence === "Annuale") {
     dt.setFullYear(dt.getFullYear() + 1);
+    if (dt.getMonth() !== origMonth) dt.setDate(0);
+  } else if (recurrence === "Decennale") {
+    dt.setFullYear(dt.getFullYear() + 10);
+    if (dt.getMonth() !== origMonth) dt.setDate(0);
   }
   const y = dt.getFullYear();
   const m = String(dt.getMonth() + 1).padStart(2, "0");
@@ -904,6 +918,9 @@ function renderExpenses() {
       : "";
 
     const tagsHtml = formatTagsInlineHtml(expense.tags);
+    const recHtml = expense.recurrence
+      ? `<span class="expense-recurrence-label">🔄 ${escapeHtml(getExpenseRecurrenceLabel(expense.recurrence))}</span>`
+      : "";
 
     li.innerHTML = `
       <div class="expense-info">
@@ -912,6 +929,7 @@ function renderExpenses() {
           <span class="badge-tag">${escapeHtml(expense.category)}</span>
           ${storeBadge}
           ${qtyBadge}
+          ${recHtml}
           ${tagsHtml}
           <span>📅 ${escapeHtml(expense.date)}</span>
         </div>
@@ -925,8 +943,144 @@ function renderExpenses() {
     expenseList.appendChild(li);
   });
 
+  renderRecurringExpensesList();
   refreshAllTagSuggestions();
   renderIndexOverview();
+}
+
+function saveRecurringExpenses() {
+  localStorage.setItem("recurring_expenses", JSON.stringify(recurringExpenses));
+}
+
+function getExpenseRecurrenceLabel(freq) {
+  if (freq === "daily") return "Giornaliera";
+  if (freq === "weekly") return "Settimanale";
+  if (freq === "monthly") return "Mensile";
+  return "";
+}
+
+function computeNextExpenseDate(dateStr, frequency) {
+  const dt = parseLocalDate(dateStr);
+  if (!dt) return "";
+  if (frequency === "daily") {
+    dt.setDate(dt.getDate() + 1);
+  } else if (frequency === "weekly") {
+    dt.setDate(dt.getDate() + 7);
+  } else if (frequency === "monthly") {
+    const day = dt.getDate();
+    dt.setMonth(dt.getMonth() + 1);
+    if (dt.getDate() < day) dt.setDate(0);
+  }
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function createRecurringRuleFromExpense(exp, frequency) {
+  const todayStr = getTodayDateString();
+  const nextDue = computeNextExpenseDate(todayStr, frequency);
+  recurringExpenses.unshift({
+    id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+    description: exp.description,
+    quantity: exp.quantity || 1,
+    store: exp.store || "",
+    amount: exp.amount,
+    category: exp.category,
+    tags: Array.isArray(exp.tags) ? exp.tags : [],
+    frequency,
+    startDate: todayStr,
+    lastGeneratedDate: todayStr,
+    nextDueDate: nextDue,
+    active: true,
+  });
+  saveRecurringExpenses();
+}
+
+function processRecurringExpenses() {
+  if (!Array.isArray(recurringExpenses) || recurringExpenses.length === 0) return 0;
+  const todayStr = getTodayDateString();
+  let generatedCount = 0;
+  let idOffset = 0;
+
+  recurringExpenses.forEach((rule) => {
+    if (!rule.active || !rule.nextDueDate) return;
+    let guard = 0;
+    while (rule.nextDueDate && rule.nextDueDate <= todayStr && guard < 90) {
+      guard += 1;
+      idOffset += 1;
+      const dueDt = parseLocalDate(rule.nextDueDate);
+      const baseTs = dueDt ? dueDt.getTime() + 12 * 3600 * 1000 : Date.now();
+      const generatedExpense = {
+        id: baseTs + idOffset,
+        description: rule.description,
+        quantity: rule.quantity || 1,
+        store: rule.store || "",
+        amount: Number(rule.amount),
+        category: rule.category || "Altro",
+        tags: Array.isArray(rule.tags) ? [...rule.tags] : [],
+        recurrence: rule.frequency,
+        recurringRuleId: rule.id,
+        date: formatItalianDate(rule.nextDueDate),
+      };
+
+      expenses.unshift(generatedExpense);
+      expenseHistory.unshift(generatedExpense);
+      generatedCount += 1;
+
+      rule.lastGeneratedDate = rule.nextDueDate;
+      rule.nextDueDate = computeNextExpenseDate(rule.nextDueDate, rule.frequency);
+    }
+  });
+
+  if (generatedCount > 0) {
+    saveExpenses();
+    saveExpenseHistory();
+    saveRecurringExpenses();
+  }
+  return generatedCount;
+}
+
+function renderRecurringExpensesList() {
+  if (!recurringExpensesSection || !recurringExpensesList) return;
+  const activeRules = recurringExpenses.filter((r) => r.active);
+  if (activeRules.length === 0) {
+    recurringExpensesSection.style.display = "none";
+    recurringExpensesList.innerHTML = "";
+    return;
+  }
+
+  recurringExpensesSection.style.display = "block";
+  recurringExpensesList.innerHTML = "";
+  activeRules.forEach((rule) => {
+    const li = document.createElement("li");
+    li.className = "compact-item";
+    const freqLabel = getExpenseRecurrenceLabel(rule.frequency);
+    const nextLabel = rule.nextDueDate ? formatItalianDate(rule.nextDueDate) : "—";
+    li.innerHTML = `
+      <div class="compact-item-main">
+        <div class="compact-item-title">${escapeHtml(rule.description)} · € ${Number(rule.amount).toFixed(2)}</div>
+        <div class="compact-item-meta">${escapeHtml(rule.category)} · 🔄 ${escapeHtml(freqLabel)} · Prossima: ${escapeHtml(nextLabel)}</div>
+      </div>
+      <button type="button" class="compact-action-btn" onclick="stopRecurringExpense(${rule.id})" title="Interrompi ricorrenza automatica">Interrompi</button>
+    `;
+    recurringExpensesList.appendChild(li);
+  });
+}
+
+window.stopRecurringExpense = function (ruleId) {
+  showConfirm("Vuoi interrompere questa spesa ricorrente? Le spese già registrate resteranno salvate.", () => {
+    recurringExpenses = recurringExpenses.filter((r) => r.id !== ruleId);
+    saveRecurringExpenses();
+    renderRecurringExpensesList();
+    showToast("Ricorrenza interrotta.");
+  });
+};
+
+if (expenseRecurringToggle && expenseRecurrenceGroup) {
+  expenseRecurringToggle.addEventListener("change", () => {
+    expenseRecurrenceGroup.style.display = expenseRecurringToggle.checked ? "flex" : "none";
+  });
 }
 
 filterCategorySelect.addEventListener("change", function (event) {
@@ -950,6 +1104,8 @@ expenseForm.addEventListener("submit", function (event) {
   const amount = parseFloat(amountInput.value);
   const category = categorySelect.value;
   const tags = parseTagsInput(tagsInput ? tagsInput.value : "");
+  const isRecurring = Boolean(expenseRecurringToggle && expenseRecurringToggle.checked);
+  const frequency = isRecurring && expenseRecurrenceFreq ? expenseRecurrenceFreq.value : "";
 
   if (!description || isNaN(amount) || amount <= 0) {
     showToast("Inserisci una descrizione e un importo valido!");
@@ -981,6 +1137,7 @@ expenseForm.addEventListener("submit", function (event) {
     amount: amount,
     category: category,
     tags: tags,
+    recurrence: frequency || undefined,
     date: new Date().toLocaleDateString("it-IT"),
   };
 
@@ -989,6 +1146,10 @@ expenseForm.addEventListener("submit", function (event) {
 
   expenseHistory.unshift(newExpense);
   saveExpenseHistory();
+
+  if (isRecurring && frequency) {
+    createRecurringRuleFromExpense(newExpense, frequency);
+  }
 
   renderExpenses();
   if (tabReportsView.classList.contains("active")) {
@@ -1000,9 +1161,16 @@ expenseForm.addEventListener("submit", function (event) {
   quickSelect.value = "";
   deleteFrequentBtn.disabled = true;
   if (tagsInput) tagsInput.value = "";
+  if (expenseRecurringToggle) expenseRecurringToggle.checked = false;
+  if (expenseRecurrenceGroup) expenseRecurrenceGroup.style.display = "none";
+  if (expenseRecurrenceFreq) expenseRecurrenceFreq.value = "monthly";
   refreshAllTagSuggestions();
   descriptionInput.focus();
-  showToast("Spesa salvata nel registro.");
+  showToast(
+    isRecurring
+      ? `Spesa salvata con ricorrenza ${getExpenseRecurrenceLabel(frequency).toLowerCase()}.`
+      : "Spesa salvata nel registro."
+  );
 });
 
 window.deleteExpense = function (id) {
@@ -2007,6 +2175,9 @@ function renderReportItem(expense) {
     : "";
 
   const tagsHtml = formatTagsInlineHtml(expense.tags);
+  const recHtml = expense.recurrence
+    ? `<span class="expense-recurrence-label">🔄 ${escapeHtml(getExpenseRecurrenceLabel(expense.recurrence))}</span>`
+    : "";
 
   li.innerHTML = `
     <div class="expense-info">
@@ -2015,6 +2186,7 @@ function renderReportItem(expense) {
         <span class="badge-tag">${escapeHtml(expense.category)}</span>
         ${storeBadge}
         ${qtyBadge}
+        ${recHtml}
         ${tagsHtml}
         <span>📅 ${escapeHtml(expense.date)}</span>
       </div>
@@ -2038,7 +2210,7 @@ const importBackupInput = document.getElementById("import-backup-input");
 if (btnExportBackup) {
   btnExportBackup.addEventListener("click", () => {
     const backup = {
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
       current_expenses: expenses,
       expense_history: expenseHistory,
@@ -2047,6 +2219,7 @@ if (btnExportBackup) {
       reminders_list: remindersList,
       notes_list: notesList,
       custom_tags: customTags,
+      recurring_expenses: recurringExpenses,
     };
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
@@ -2109,7 +2282,12 @@ if (btnImportBackup && importBackupInput) {
               customTags = parsed.custom_tags;
               localStorage.setItem("custom_tags", JSON.stringify(customTags));
             }
+            if (Array.isArray(parsed.recurring_expenses)) {
+              recurringExpenses = parsed.recurring_expenses;
+              saveRecurringExpenses();
+            }
 
+            processRecurringExpenses();
             renderFrequentDropdowns();
             renderShoppingList();
             renderExpenses();
@@ -2146,11 +2324,20 @@ const quickExpenseQty = document.getElementById("quick-expense-qty");
 const quickExpenseStore = document.getElementById("quick-expense-store");
 const quickExpenseTags = document.getElementById("quick-expense-tags");
 const quickExpenseTagSuggestions = document.getElementById("quick-expense-tag-suggestions");
+const quickExpenseRecurringToggle = document.getElementById("quick-expense-recurring-toggle");
+const quickExpenseRecurrenceGroup = document.getElementById("quick-expense-recurrence-group");
+const quickExpenseRecurrenceFreq = document.getElementById("quick-expense-recurrence-freq");
 
 if (quickExpenseTags) {
   quickExpenseTags.addEventListener("input", () =>
     renderTagSuggestionsFor(quickExpenseTags, quickExpenseTagSuggestions)
   );
+}
+
+if (quickExpenseRecurringToggle && quickExpenseRecurrenceGroup) {
+  quickExpenseRecurringToggle.addEventListener("change", () => {
+    quickExpenseRecurrenceGroup.style.display = quickExpenseRecurringToggle.checked ? "flex" : "none";
+  });
 }
 
 function openQuickExpenseOverlay() {
@@ -2159,6 +2346,9 @@ function openQuickExpenseOverlay() {
   quickExpenseQty.value = 1;
   quickExpenseFrequent.value = "";
   if (quickExpenseTags) quickExpenseTags.value = "";
+  if (quickExpenseRecurringToggle) quickExpenseRecurringToggle.checked = false;
+  if (quickExpenseRecurrenceGroup) quickExpenseRecurrenceGroup.style.display = "none";
+  if (quickExpenseRecurrenceFreq) quickExpenseRecurrenceFreq.value = "monthly";
   renderTagSuggestionsFor(quickExpenseTags, quickExpenseTagSuggestions);
   quickExpenseOverlay.style.display = "flex";
   setTimeout(() => quickExpenseDesc.focus(), 60);
@@ -2219,6 +2409,8 @@ if (quickExpenseForm) {
     const quantity = parseInt(quickExpenseQty.value, 10) || 1;
     const store = quickExpenseStore.value.trim();
     const tags = parseTagsInput(quickExpenseTags ? quickExpenseTags.value : "");
+    const isRecurring = Boolean(quickExpenseRecurringToggle && quickExpenseRecurringToggle.checked);
+    const frequency = isRecurring && quickExpenseRecurrenceFreq ? quickExpenseRecurrenceFreq.value : "";
 
     if (!description || isNaN(amount) || amount <= 0) {
       showToast("Inserisci una descrizione e un importo valido!");
@@ -2244,6 +2436,7 @@ if (quickExpenseForm) {
       amount,
       category,
       tags,
+      recurrence: frequency || undefined,
       date: new Date().toLocaleDateString("it-IT"),
     };
 
@@ -2253,24 +2446,40 @@ if (quickExpenseForm) {
     expenseHistory.unshift(newExpense);
     saveExpenseHistory();
 
+    if (isRecurring && frequency) {
+      createRecurringRuleFromExpense(newExpense, frequency);
+    }
+
     renderExpenses();
     if (tabReportsView.classList.contains("active")) {
       renderReports();
     }
 
     closeQuickExpenseOverlay();
-    showToast("Spesa salvata nel registro.");
+    showToast(
+      isRecurring
+        ? `Spesa salvata con ricorrenza ${getExpenseRecurrenceLabel(frequency).toLowerCase()}.`
+        : "Spesa salvata nel registro."
+    );
   });
 }
 
 // ==============================================================================
 // 14. AVVIO INIZIALE
 // ==============================================================================
+const autoGeneratedRecurring = processRecurringExpenses();
 renderFrequentDropdowns();
 renderShoppingList();
 renderExpenses();
 renderReminders();
 renderNotes();
 renderIndexOverview();
+if (autoGeneratedRecurring > 0) {
+  showToast(
+    autoGeneratedRecurring === 1
+      ? "🔄 Registrata 1 spesa ricorrente automatica."
+      : `🔄 Registrate ${autoGeneratedRecurring} spese ricorrenti automatiche.`
+  );
+}
 
 
