@@ -203,6 +203,7 @@ const amountInput = document.getElementById("amount");
 const categorySelect = document.getElementById("category");
 const tagsInput = document.getElementById("tags");
 const tagSuggestionsEl = document.getElementById("tag-suggestions");
+const expenseQuickNoteInput = document.getElementById("expense-quick-note");
 const expenseRecurringToggle = document.getElementById("expense-recurring-toggle");
 const expenseRecurrenceGroup = document.getElementById("expense-recurrence-group");
 const expenseRecurrenceFreq = document.getElementById("expense-recurrence-freq");
@@ -440,6 +441,9 @@ function addRecurrenceToDate(dateStr, recurrence) {
     if (dt.getDate() < day) dt.setDate(0);
   } else if (recurrence === "Bimensile") {
     dt.setMonth(dt.getMonth() + 2);
+    if (dt.getDate() < day) dt.setDate(0);
+  } else if (recurrence === "Semestrale") {
+    dt.setMonth(dt.getMonth() + 6);
     if (dt.getDate() < day) dt.setDate(0);
   } else if (recurrence === "Annuale") {
     dt.setFullYear(dt.getFullYear() + 1);
@@ -710,6 +714,7 @@ deleteFrequentBtn.addEventListener("click", function () {
           tagsInput.value = "";
           refreshAllTagSuggestions();
         }
+        if (expenseQuickNoteInput) expenseQuickNoteInput.value = "";
         quantityInput.value = 1;
       }
       showToast("Voce frequente rimossa.");
@@ -921,10 +926,14 @@ function renderExpenses() {
     const recHtml = expense.recurrence
       ? `<span class="expense-recurrence-label">🔄 ${escapeHtml(getExpenseRecurrenceLabel(expense.recurrence))}</span>`
       : "";
+    const noteHtml = expense.note
+      ? `<div class="expense-note-text">📝 ${escapeHtml(expense.note)}</div>`
+      : "";
 
     li.innerHTML = `
       <div class="expense-info">
         <span class="expense-desc">${escapeHtml(expense.description)}</span>
+        ${noteHtml}
         <div class="expense-meta">
           <span class="badge-tag">${escapeHtml(expense.category)}</span>
           ${storeBadge}
@@ -988,6 +997,7 @@ function createRecurringRuleFromExpense(exp, frequency) {
     amount: exp.amount,
     category: exp.category,
     tags: Array.isArray(exp.tags) ? exp.tags : [],
+    note: exp.note || "",
     frequency,
     startDate: todayStr,
     lastGeneratedDate: todayStr,
@@ -1019,6 +1029,7 @@ function processRecurringExpenses() {
         amount: Number(rule.amount),
         category: rule.category || "Altro",
         tags: Array.isArray(rule.tags) ? [...rule.tags] : [],
+        note: rule.note || undefined,
         recurrence: rule.frequency,
         recurringRuleId: rule.id,
         date: formatItalianDate(rule.nextDueDate),
@@ -1104,6 +1115,7 @@ expenseForm.addEventListener("submit", function (event) {
   const amount = parseFloat(amountInput.value);
   const category = categorySelect.value;
   const tags = parseTagsInput(tagsInput ? tagsInput.value : "");
+  const note = expenseQuickNoteInput ? expenseQuickNoteInput.value.trim() : "";
   const isRecurring = Boolean(expenseRecurringToggle && expenseRecurringToggle.checked);
   const frequency = isRecurring && expenseRecurrenceFreq ? expenseRecurrenceFreq.value : "";
 
@@ -1137,6 +1149,7 @@ expenseForm.addEventListener("submit", function (event) {
     amount: amount,
     category: category,
     tags: tags,
+    note: note || undefined,
     recurrence: frequency || undefined,
     date: new Date().toLocaleDateString("it-IT"),
   };
@@ -1161,6 +1174,7 @@ expenseForm.addEventListener("submit", function (event) {
   quickSelect.value = "";
   deleteFrequentBtn.disabled = true;
   if (tagsInput) tagsInput.value = "";
+  if (expenseQuickNoteInput) expenseQuickNoteInput.value = "";
   if (expenseRecurringToggle) expenseRecurringToggle.checked = false;
   if (expenseRecurrenceGroup) expenseRecurrenceGroup.style.display = "none";
   if (expenseRecurrenceFreq) expenseRecurrenceFreq.value = "monthly";
@@ -1925,12 +1939,14 @@ indexGlobalSearch.addEventListener("input", function () {
       exp.description.toLowerCase().includes(query) ||
       (exp.store || "").toLowerCase().includes(query) ||
       (exp.category || "").toLowerCase().includes(query) ||
+      (exp.note || "").toLowerCase().includes(query) ||
       tagsMatch
     ) {
       const tagsPreview = expTags.length ? ` · ${expTags.map((t) => `#${t}`).join(" ")}` : "";
+      const notePreview = exp.note ? ` · 📝 ${exp.note}` : "";
       results.push({
         title: `${exp.description} (€ ${Number(exp.amount).toFixed(2)})`,
-        meta: `${exp.category}${exp.store ? ` · ${exp.store}` : ""}${tagsPreview} · ${exp.date}`,
+        meta: `${exp.category}${exp.store ? ` · ${exp.store}` : ""}${tagsPreview}${notePreview} · ${exp.date}`,
         section: "📊 Storico",
         target: "reports",
       });
@@ -2178,10 +2194,14 @@ function renderReportItem(expense) {
   const recHtml = expense.recurrence
     ? `<span class="expense-recurrence-label">🔄 ${escapeHtml(getExpenseRecurrenceLabel(expense.recurrence))}</span>`
     : "";
+  const noteHtml = expense.note
+    ? `<div class="expense-note-text">📝 ${escapeHtml(expense.note)}</div>`
+    : "";
 
   li.innerHTML = `
     <div class="expense-info">
       <span class="expense-desc">${escapeHtml(expense.description)}</span>
+      ${noteHtml}
       <div class="expense-meta">
         <span class="badge-tag">${escapeHtml(expense.category)}</span>
         ${storeBadge}
@@ -2198,6 +2218,87 @@ function renderReportItem(expense) {
   `;
 
   reportExpenseList.appendChild(li);
+}
+
+const btnExportReportPdf = document.getElementById("btn-export-report-pdf");
+
+if (btnExportReportPdf) {
+  btnExportReportPdf.addEventListener("click", async () => {
+    if (typeof window.exportReportPdf !== "function") {
+      showToast("Generatore PDF non disponibile.");
+      return;
+    }
+
+    const baseCategories = ["Alimentari", "Trasporti", "Svago", "Casa", "Altro"];
+    const originalLabel = btnExportReportPdf.textContent;
+    btnExportReportPdf.disabled = true;
+    btnExportReportPdf.textContent = "Generazione PDF...";
+
+    try {
+      if (reportMode === "monthly") {
+        const monthLabel = reportMonthSelect.options[reportMonthSelect.selectedIndex]?.text || selectedReportMonth || "Mese";
+        const filtered = expenseHistory.filter((exp) => getExpenseDateInfo(exp).monthKey === selectedReportMonth);
+        const total = filtered.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+        const mappedExpenses = filtered.map((exp) => ({
+          ...exp,
+          dateFormatted: getExpenseDateInfo(exp).dateFormatted,
+          recurrenceLabel: exp.recurrence ? getExpenseRecurrenceLabel(exp.recurrence) : "",
+        }));
+
+        await window.exportReportPdf({
+          mode: "monthly",
+          periodTitle: `Report Spese — ${monthLabel}`,
+          periodSubtitle: "Riepilogo mensile per categoria ed elenco dettagliato",
+          totalAmount: total,
+          totalCount: mappedExpenses.length,
+          categories: baseCategories,
+          yearlySummary: [],
+          expenses: mappedExpenses,
+          fileName: `report-spese-${selectedReportMonth || getTodayDateString()}.pdf`,
+        });
+      } else {
+        const yearStr = selectedReportYear || String(new Date().getFullYear());
+        const filtered = expenseHistory.filter((exp) => getExpenseDateInfo(exp).year === yearStr);
+        const total = filtered.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+        const usedCategoriesSet = new Set(baseCategories);
+        filtered.forEach((exp) => usedCategoriesSet.add(exp.category || "Altro"));
+        const allCategories = Array.from(usedCategoriesSet);
+
+        const yearlySummary = MONTH_NAMES.map((mName, mIdx) => {
+          const monthExp = filtered.filter((exp) => getExpenseDateInfo(exp).monthIndex === mIdx);
+          const mTotal = monthExp.reduce((a, c) => a + Number(c.amount || 0), 0);
+          return { name: mName, total: Number(mTotal.toFixed(2)) };
+        });
+
+        const mappedExpenses = filtered.map((exp) => ({
+          ...exp,
+          dateFormatted: getExpenseDateInfo(exp).dateFormatted,
+          recurrenceLabel: exp.recurrence ? getExpenseRecurrenceLabel(exp.recurrence) : "",
+        }));
+
+        await window.exportReportPdf({
+          mode: "yearly",
+          periodTitle: `Report Spese — Anno ${yearStr}`,
+          periodSubtitle: "Riepilogo annuale mese per mese, grafico ed elenco spese",
+          totalAmount: total,
+          totalCount: mappedExpenses.length,
+          categories: allCategories,
+          yearlySummary,
+          expenses: mappedExpenses,
+          fileName: `report-spese-anno-${yearStr}.pdf`,
+        });
+      }
+
+      showToast("Report PDF scaricato.");
+    } catch {
+      showToast("Errore durante la generazione del report PDF.");
+    } finally {
+      btnExportReportPdf.disabled = false;
+      btnExportReportPdf.textContent = originalLabel;
+    }
+  });
 }
 
 // ==============================================================================
@@ -2324,6 +2425,7 @@ const quickExpenseQty = document.getElementById("quick-expense-qty");
 const quickExpenseStore = document.getElementById("quick-expense-store");
 const quickExpenseTags = document.getElementById("quick-expense-tags");
 const quickExpenseTagSuggestions = document.getElementById("quick-expense-tag-suggestions");
+const quickExpenseNote = document.getElementById("quick-expense-note");
 const quickExpenseRecurringToggle = document.getElementById("quick-expense-recurring-toggle");
 const quickExpenseRecurrenceGroup = document.getElementById("quick-expense-recurrence-group");
 const quickExpenseRecurrenceFreq = document.getElementById("quick-expense-recurrence-freq");
@@ -2346,6 +2448,7 @@ function openQuickExpenseOverlay() {
   quickExpenseQty.value = 1;
   quickExpenseFrequent.value = "";
   if (quickExpenseTags) quickExpenseTags.value = "";
+  if (quickExpenseNote) quickExpenseNote.value = "";
   if (quickExpenseRecurringToggle) quickExpenseRecurringToggle.checked = false;
   if (quickExpenseRecurrenceGroup) quickExpenseRecurrenceGroup.style.display = "none";
   if (quickExpenseRecurrenceFreq) quickExpenseRecurrenceFreq.value = "monthly";
@@ -2409,6 +2512,7 @@ if (quickExpenseForm) {
     const quantity = parseInt(quickExpenseQty.value, 10) || 1;
     const store = quickExpenseStore.value.trim();
     const tags = parseTagsInput(quickExpenseTags ? quickExpenseTags.value : "");
+    const note = quickExpenseNote ? quickExpenseNote.value.trim() : "";
     const isRecurring = Boolean(quickExpenseRecurringToggle && quickExpenseRecurringToggle.checked);
     const frequency = isRecurring && quickExpenseRecurrenceFreq ? quickExpenseRecurrenceFreq.value : "";
 
@@ -2436,6 +2540,7 @@ if (quickExpenseForm) {
       amount,
       category,
       tags,
+      note: note || undefined,
       recurrence: frequency || undefined,
       date: new Date().toLocaleDateString("it-IT"),
     };

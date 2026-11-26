@@ -1456,7 +1456,61 @@ button {
   font-weight: 600;
 }
 
+.expense-note-text {
+  font-size: 0.84rem;
+  color: #4b5563;
+  margin-top: 2px;
+  line-height: 1.35;
+  word-break: break-word;
+}
 
+/* Pulsante Esporta Report PDF nello Storico */
+.report-export-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
 
+.report-pdf-btn {
+  width: 100%;
+}
 
+@media (min-width: 521px) {
+  .report-pdf-btn {
+    width: auto;
+  }
+}
 
+/* Stampa nativa pulita per il riepilogo Storico */
+@media print {
+  body {
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .nav-tabs,
+  .report-mode-toggle,
+  .report-export-row,
+  #section-select-month,
+  #section-select-year,
+  .btn-delete,
+  .fab-quick-expense,
+  .modal-overlay,
+  .app-toast {
+    display: none !important;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .form-section,
+  .list-section,
+  .card {
+    box-shadow: none;
+    border-color: #d1d5db;
+    break-inside: avoid;
+  }
+}

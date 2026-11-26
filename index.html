@@ -336,6 +336,11 @@
             <div id="tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
           </div>
 
+          <div class="form-group">
+            <label for="expense-quick-note">Nota rapida (opzionale)</label>
+            <input type="text" id="expense-quick-note" maxlength="160" placeholder="Es. Pagato con carta aziendale, regalo per Marco..." autocomplete="off">
+          </div>
+
           <div class="recurrence-box">
             <label class="checkbox-inline" for="expense-recurring-toggle" style="margin-bottom: 0;">
               <input type="checkbox" id="expense-recurring-toggle">
@@ -483,6 +488,7 @@
                 <option value="Nessuna">Nessuna (una tantum)</option>
                 <option value="Mensile">Mensile (ogni mese)</option>
                 <option value="Bimensile">Bimensile (ogni 2 mesi)</option>
+                <option value="Semestrale">Semestrale (ogni 6 mesi)</option>
                 <option value="Annuale">Annuale (ogni anno)</option>
                 <option value="Decennale">Decennale (ogni 10 anni)</option>
               </select>
@@ -645,6 +651,12 @@
             <!-- Popolato dinamicamente da JavaScript -->
           </select>
         </div>
+
+        <div class="report-export-row">
+          <button type="button" class="btn-outline-primary report-pdf-btn" id="btn-export-report-pdf">
+            📄 Esporta Report PDF
+          </button>
+        </div>
       </section>
 
       <!-- Totali del Periodo Selezionato -->
@@ -748,6 +760,11 @@
           <label for="quick-expense-tags">Tag personalizzati (opzionali)</label>
           <input type="text" id="quick-expense-tags" placeholder="Es. urgente, rimborso, lavoro..." autocomplete="off">
           <div id="quick-expense-tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="quick-expense-note">Nota rapida (opzionale)</label>
+          <input type="text" id="quick-expense-note" maxlength="160" placeholder="Es. Pagato con carta aziendale, regalo..." autocomplete="off">
         </div>
 
         <div class="recurrence-box">
