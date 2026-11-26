@@ -1,0 +1,20 @@
+{
+  "name": "spese-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gestore Spese & Lista della Spesa",
+  "scripts": {
+    "dev": "npm run build && node server.js",
+    "start": "node server.js",
+    "build": "esbuild src/reports-chart.jsx --bundle --minify --define:process.env.NODE_ENV='\"production\"' --outfile=reports-chart.bundle.js && node --check server.js && node --check app.js",
+    "lint": "node --check server.js && node --check app.js && esbuild src/reports-chart.jsx --bundle --outfile=/dev/null"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "express": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "recharts": "^3.11.1"
+  }
+}

@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestore Spese & Lista della Spesa</title>
+  <title>Gestore Spese — Lista, Scadenze, Note & Indice</title>
+  <meta name="description" content="Organizzatore personale: indice generale, lista della spesa, registro spese, promemoria, scadenze, note e report mensili/annuali.">
+  <meta property="og:title" content="Gestore Spese — Lista, Scadenze, Note & Indice">
+  <meta property="og:description" content="Organizzatore personale: indice generale, lista della spesa, registro spese, promemoria, scadenze, note e report mensili/annuali.">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -11,22 +14,31 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Gestore Spese">
-  <link rel="stylesheet" href="style.css?v=4.1">
+  <link rel="stylesheet" href="style.css?v=5.0">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Gestore Spese</h1>
-      <p class="subtitle">Lista della spesa, registro costi e report mensili/annuali</p>
+      <h1>Gestore Spese &amp; Agenda</h1>
+      <p class="subtitle">Indice generale, lista della spesa, spese, promemoria, scadenze e note</p>
     </header>
 
-    <!-- Navigazione a 3 Schede -->
-    <nav class="nav-tabs">
-      <button type="button" class="tab-btn active" id="tab-shopping-btn">
+    <!-- Navigazione principale -->
+    <nav class="nav-tabs" aria-label="Sezioni principali">
+      <button type="button" class="tab-btn active" id="tab-index-btn">
+        🧭 Indice
+      </button>
+      <button type="button" class="tab-btn" id="tab-shopping-btn">
         🛒 Lista <span id="shopping-badge" class="badge-count">0</span>
       </button>
       <button type="button" class="tab-btn" id="tab-expenses-btn">
         💰 Spese
+      </button>
+      <button type="button" class="tab-btn" id="tab-reminders-btn">
+        ⏰ Scadenze <span id="reminders-badge" class="badge-count">0</span>
+      </button>
+      <button type="button" class="tab-btn" id="tab-notes-btn">
+        📝 Note
       </button>
       <button type="button" class="tab-btn" id="tab-reports-btn">
         📊 Storico
@@ -34,9 +46,159 @@
     </nav>
 
     <!-- ===================================================================== -->
+    <!-- SCHEDA 0: INDICE GENERALE                                             -->
+    <!-- ===================================================================== -->
+    <main id="tab-index-view" class="tab-view active">
+      <!-- Ricerca globale nell'indice -->
+      <section class="form-section index-search-section">
+        <div class="index-search-header">
+          <div>
+            <h2>Indice Generale</h2>
+            <p class="section-hint" id="index-today-date">Panoramica completa delle attività</p>
+          </div>
+        </div>
+        <div class="index-search-bar">
+          <input
+            type="search"
+            id="index-global-search"
+            placeholder="Cerca in tutto l'indice: spese, articoli, scadenze, note..."
+            autocomplete="off"
+          >
+        </div>
+        <div id="index-search-results" class="index-search-results" style="display: none;"></div>
+      </section>
+
+      <!-- Griglia Indice Sezioni (cliccabili per navigazione diretta) -->
+      <section class="index-directory-grid" aria-label="Indice delle sezioni">
+        <button type="button" class="index-dir-card" data-nav-target="shopping">
+          <div class="index-dir-top">
+            <span class="index-dir-title">🛒 Lista della Spesa</span>
+            <span class="index-dir-arrow" aria-hidden="true">→</span>
+          </div>
+          <div class="index-dir-metric" id="idx-shopping-count">0 da comprare</div>
+          <div class="index-dir-sub" id="idx-shopping-preview">Nessun articolo in attesa</div>
+        </button>
+
+        <button type="button" class="index-dir-card" data-nav-target="expenses">
+          <div class="index-dir-top">
+            <span class="index-dir-title">💰 Spese Correnti</span>
+            <span class="index-dir-arrow" aria-hidden="true">→</span>
+          </div>
+          <div class="index-dir-metric" id="idx-expenses-total">€ 0.00</div>
+          <div class="index-dir-sub" id="idx-expenses-sub">0 spese nella sessione</div>
+        </button>
+
+        <button type="button" class="index-dir-card" data-nav-target="reminders">
+          <div class="index-dir-top">
+            <span class="index-dir-title">⏰ Promemoria &amp; Scadenze</span>
+            <span class="index-dir-arrow" aria-hidden="true">→</span>
+          </div>
+          <div class="index-dir-metric" id="idx-reminders-count">0 attivi</div>
+          <div class="index-dir-sub" id="idx-reminders-sub">Nessuna scadenza imminente</div>
+        </button>
+
+        <button type="button" class="index-dir-card" data-nav-target="notes">
+          <div class="index-dir-top">
+            <span class="index-dir-title">📝 Note &amp; Appunti</span>
+            <span class="index-dir-arrow" aria-hidden="true">→</span>
+          </div>
+          <div class="index-dir-metric" id="idx-notes-count">0 note</div>
+          <div class="index-dir-sub" id="idx-notes-sub">Nessuna nota salvata</div>
+        </button>
+      </section>
+
+      <!-- Azioni rapide dall'indice -->
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Azioni Rapide</h2>
+        </div>
+        <div class="quick-actions-grid">
+          <button type="button" class="quick-action-btn" id="qa-add-shopping">
+            + Articolo Lista
+          </button>
+          <button type="button" class="quick-action-btn" id="qa-add-expense">
+            + Nuova Spesa
+          </button>
+          <button type="button" class="quick-action-btn" id="qa-add-reminder">
+            + Scadenza / Promemoria
+          </button>
+          <button type="button" class="quick-action-btn" id="qa-add-note">
+            + Nuova Nota
+          </button>
+        </div>
+      </section>
+
+      <!-- Riepilogo Scadenze e Promemoria imminenti + Note fissate -->
+      <div class="index-two-col">
+        <section class="list-section">
+          <div class="list-header">
+            <h2>Prossime Scadenze &amp; Promemoria</h2>
+            <button type="button" class="btn-link" data-nav-target="reminders">Vedi tutti</button>
+          </div>
+          <ul id="index-upcoming-reminders" class="compact-list"></ul>
+          <div id="index-reminders-empty" class="empty-state">
+            <p>Nessun promemoria o scadenza attiva.</p>
+          </div>
+        </section>
+
+        <section class="list-section">
+          <div class="list-header">
+            <h2>Note in Evidenza</h2>
+            <button type="button" class="btn-link" data-nav-target="notes">Vedi tutte</button>
+          </div>
+          <ul id="index-pinned-notes" class="compact-list"></ul>
+          <div id="index-notes-empty" class="empty-state">
+            <p>Nessuna nota salvata. Fissa le note importanti per trovarle subito qui.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Riepilogo mese corrente e link allo storico -->
+      <section class="list-section index-month-banner">
+        <div class="list-header" style="margin-bottom: 0;">
+          <div>
+            <h2 id="idx-month-title">Riepilogo Mese Corrente</h2>
+            <p class="section-hint" id="idx-month-detail">0 spese registrate nello storico questo mese</p>
+          </div>
+          <div class="index-month-right">
+            <span class="index-month-amount" id="idx-month-total">€ 0.00</span>
+            <button type="button" class="btn-link" data-nav-target="reports">Apri Storico →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Backup dati e scaricamento file singolo per Android -->
+      <section class="list-section">
+        <div class="list-header">
+          <div>
+            <h2>Backup Dati &amp; File Offline</h2>
+            <p class="section-hint">Salva o trasferisci i dati tra dispositivi, oppure scarica l'app in file unico per Android.</p>
+          </div>
+        </div>
+        <div class="backup-actions-row">
+          <button type="button" class="btn-outline" id="btn-export-backup">📤 Esporta Backup (.json)</button>
+          <button type="button" class="btn-outline" id="btn-import-backup">📥 Importa Backup (.json)</button>
+          <a href="spese.html" download="spese.html" class="btn-outline-primary" id="btn-download-singlefile">📱 Scarica spese.html</a>
+          <input type="file" id="import-backup-input" accept=".json,application/json" style="display: none;">
+        </div>
+      </section>
+
+      <!-- Pulsante flottante per inserimento rapido spesa -->
+      <button
+        type="button"
+        id="fab-quick-expense"
+        class="fab-quick-expense"
+        title="Aggiungi una spesa subito"
+        aria-label="Aggiungi spesa rapida"
+      >
+        + Spesa
+      </button>
+    </main>
+
+    <!-- ===================================================================== -->
     <!-- SCHEDA 1: LISTA DELLA SPESA                                           -->
     <!-- ===================================================================== -->
-    <main id="tab-shopping-view" class="tab-view active">
+    <main id="tab-shopping-view" class="tab-view">
       <section class="form-section">
         <h2>📝 Aggiungi articolo alla lista</h2>
 
@@ -168,6 +330,12 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="tags">Tag personalizzati (opzionali, separati da virgola)</label>
+            <input type="text" id="tags" placeholder="Es. urgente, rimborso, lavoro..." autocomplete="off">
+            <div id="tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
+          </div>
+
           <button type="submit" class="btn-primary">Salva Spesa nel Registro</button>
         </form>
       </section>
@@ -184,6 +352,9 @@
               <option value="Casa">🏠 Casa</option>
               <option value="Altro">✨ Altro</option>
             </select>
+            <select id="filter-tag" class="filter-select" title="Filtra per tag personalizzato">
+              <option value="ALL">🏷️ Tutti i tag</option>
+            </select>
             <button id="clear-all-btn" class="btn-secondary" type="button" title="Azzera le spese correnti per iniziare una nuova spesa (lo storico resta salvato)">Svuota spese</button>
           </div>
         </div>
@@ -197,7 +368,232 @@
     </main>
 
     <!-- ===================================================================== -->
-    <!-- SCHEDA 3: STORICO, REPORT MENSILE E ANNUALE                           -->
+    <!-- SCHEDA 3: PROMEMORIA E SCADENZE                                       -->
+    <!-- ===================================================================== -->
+    <main id="tab-reminders-view" class="tab-view">
+      <section class="summary-cards">
+        <div class="card card-total">
+          <span class="label">Attivi da completare</span>
+          <span class="amount" id="reminders-active-count">0</span>
+        </div>
+        <div class="card card-urgent">
+          <span class="label">Scaduti o Oggi</span>
+          <span class="amount" id="reminders-urgent-count">0</span>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-header-row">
+          <h2 id="reminder-form-title">Nuovo Promemoria / Scadenza</h2>
+          <button type="button" id="reminder-cancel-edit-btn" class="btn-ghost" style="display: none;">Annulla modifica</button>
+        </div>
+
+        <form id="reminder-form">
+          <input type="hidden" id="reminder-edit-id" value="">
+
+          <div class="form-group">
+            <label for="reminder-title">Titolo promemoria o scadenza</label>
+            <input
+              type="text"
+              id="reminder-title"
+              placeholder="Es. Bolletta luce, Assicurazione auto, Controllo caldaia..."
+              required
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reminder-type">Tipo</label>
+              <select id="reminder-type">
+                <option value="Scadenza">📅 Scadenza</option>
+                <option value="Promemoria">⏰ Promemoria</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="reminder-category">Categoria</label>
+              <select id="reminder-category">
+                <option value="Casa">🏠 Casa / Utenze</option>
+                <option value="Trasporti">🚗 Trasporti / Auto</option>
+                <option value="Alimentari">🛒 Alimentari</option>
+                <option value="Svago">🍿 Svago</option>
+                <option value="Altro">✨ Altro / Personale</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reminder-date">Data scadenza (opzionale)</label>
+              <input type="date" id="reminder-date">
+            </div>
+
+            <div class="form-group">
+              <label for="reminder-time">Ora (opzionale)</label>
+              <input type="time" id="reminder-time">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reminder-priority">Priorità</label>
+              <select id="reminder-priority">
+                <option value="Normale">Normale</option>
+                <option value="Alta">Alta</option>
+                <option value="Bassa">Bassa</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="reminder-amount">Importo previsto € (opzionale)</label>
+              <input type="number" id="reminder-amount" step="0.01" min="0" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reminder-recurrence">Ricorrenza</label>
+              <select id="reminder-recurrence">
+                <option value="Nessuna">Nessuna (una tantum)</option>
+                <option value="Mensile">Mensile</option>
+                <option value="Annuale">Annuale</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="reminder-note">Dettaglio breve (opzionale)</label>
+              <input type="text" id="reminder-note" placeholder="Es. Addebito SEPA, sportello...">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="reminder-submit-btn">
+            Salva Promemoria / Scadenza
+          </button>
+        </form>
+      </section>
+
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Elenco Scadenze &amp; Promemoria</h2>
+          <div class="list-controls">
+            <select id="reminder-filter-status" class="filter-select" title="Filtra per stato">
+              <option value="PENDING">Da completare</option>
+              <option value="URGENT">Scaduti / Imminenti</option>
+              <option value="ALL">Tutti</option>
+              <option value="COMPLETED">Completati</option>
+            </select>
+            <select id="reminder-filter-type" class="filter-select" title="Filtra per tipo">
+              <option value="ALL">Tutti i tipi</option>
+              <option value="Scadenza">Solo Scadenze</option>
+              <option value="Promemoria">Solo Promemoria</option>
+            </select>
+            <button id="clear-completed-reminders-btn" class="btn-secondary" type="button" style="display: none;">
+              Elimina completati
+            </button>
+          </div>
+        </div>
+
+        <ul id="reminders-list" class="reminders-list"></ul>
+
+        <div id="reminders-empty-state" class="empty-state">
+          <p id="reminders-empty-text">Nessun promemoria o scadenza registrata. Aggiungine una sopra!</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- SCHEDA 4: NOTE E APPUNTI                                              -->
+    <!-- ===================================================================== -->
+    <main id="tab-notes-view" class="tab-view">
+      <section class="form-section">
+        <div class="form-header-row">
+          <h2 id="note-form-title">Nuova Nota</h2>
+          <button type="button" id="note-cancel-edit-btn" class="btn-ghost" style="display: none;">Annulla modifica</button>
+        </div>
+
+        <form id="note-form">
+          <input type="hidden" id="note-edit-id" value="">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="note-title">Titolo</label>
+              <input
+                type="text"
+                id="note-title"
+                placeholder="Es. Lista documenti, Budget vacanze, Numeri utili..."
+                required
+                autocomplete="off"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="note-category">Cartella / Argomento</label>
+              <select id="note-category">
+                <option value="Generale">Generale</option>
+                <option value="Spese e Budget">Spese e Budget</option>
+                <option value="Casa">Casa</option>
+                <option value="Lavoro">Lavoro</option>
+                <option value="Personale">Personale</option>
+                <option value="Idee">Idee</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="note-content">Testo della nota</label>
+            <textarea
+              id="note-content"
+              rows="4"
+              placeholder="Scrivi qui i tuoi appunti, dettagli o elenchi..."
+              required
+            ></textarea>
+          </div>
+
+          <label class="checkbox-inline" for="note-pinned">
+            <input type="checkbox" id="note-pinned">
+            <span>📌 Fissa in alto e mostra nell'Indice Generale</span>
+          </label>
+
+          <button type="submit" class="btn-primary" id="note-submit-btn">
+            Salva Nota
+          </button>
+        </form>
+      </section>
+
+      <section class="list-section">
+        <div class="list-header">
+          <h2>Le tue Note (<span id="notes-total-count">0</span>)</h2>
+          <div class="list-controls">
+            <input
+              type="search"
+              id="note-search-input"
+              class="filter-input"
+              placeholder="Cerca nelle note..."
+              autocomplete="off"
+            >
+            <select id="note-filter-category" class="filter-select" title="Filtra per argomento">
+              <option value="ALL">Tutte le cartelle</option>
+              <option value="Generale">Generale</option>
+              <option value="Spese e Budget">Spese e Budget</option>
+              <option value="Casa">Casa</option>
+              <option value="Lavoro">Lavoro</option>
+              <option value="Personale">Personale</option>
+              <option value="Idee">Idee</option>
+            </select>
+          </div>
+        </div>
+
+        <ul id="notes-list" class="notes-list"></ul>
+
+        <div id="notes-empty-state" class="empty-state">
+          <p id="notes-empty-text">Nessuna nota salvata. Scrivi il tuo primo appunto sopra!</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- SCHEDA 5: STORICO, REPORT MENSILE E ANNUALE                           -->
     <!-- ===================================================================== -->
     <main id="tab-reports-view" class="tab-view">
       <!-- Selettore modalità: Mensile vs Annuale -->
@@ -236,6 +632,17 @@
         </div>
       </section>
 
+      <!-- Grafico a Barre Recharts (Spese Mensili per Categoria) -->
+      <section class="list-section" id="reports-chart-section">
+        <div class="list-header">
+          <div>
+            <h2 id="reports-chart-title">Spese per Categoria</h2>
+            <p class="section-hint" id="reports-chart-subtitle">Distribuzione delle spese nel periodo selezionato</p>
+          </div>
+        </div>
+        <div id="reports-chart-root" class="reports-chart-root"></div>
+      </section>
+
       <!-- Tabella / Ripartizione Mesi (Visibile solo in Vista Annuale) -->
       <section id="yearly-breakdown-section" class="list-section" style="display: none;">
         <h2>Ripartizione Mese per Mese</h2>
@@ -259,6 +666,86 @@
     </main>
   </div>
 
-  <script src="app.js?v=4.1"></script>
+  <!-- Overlay inserimento spesa rapida dall'Indice -->
+  <div id="quick-expense-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="quick-expense-modal-title" style="display: none;">
+    <div class="modal-box modal-box-wide">
+      <div class="modal-header-row">
+        <h2 id="quick-expense-modal-title">Nuova Spesa Rapida</h2>
+        <button type="button" id="quick-expense-close-btn" class="btn-icon-action" aria-label="Chiudi">✕</button>
+      </div>
+
+      <form id="quick-expense-form">
+        <div class="form-group">
+          <label for="quick-expense-frequent">⚡ Acquisto frequente (opzionale)</label>
+          <select id="quick-expense-frequent">
+            <option value="">-- Compila manualmente sotto --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quick-expense-desc">Descrizione articolo</label>
+          <input type="text" id="quick-expense-desc" placeholder="Es. Pane, Caffè, Carburante..." required autocomplete="off">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quick-expense-amount">Importo (€)</label>
+            <input type="number" id="quick-expense-amount" step="0.01" min="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="form-group">
+            <label for="quick-expense-category">Categoria</label>
+            <select id="quick-expense-category" required>
+              <option value="Alimentari">🛒 Alimentari</option>
+              <option value="Trasporti">🚗 Trasporti</option>
+              <option value="Svago">🍿 Svago</option>
+              <option value="Casa">🏠 Casa</option>
+              <option value="Altro">✨ Altro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quick-expense-qty">Quantità</label>
+            <input type="number" id="quick-expense-qty" min="1" step="1" value="1" required>
+          </div>
+
+          <div class="form-group">
+            <label for="quick-expense-store">Negozio (opzionale)</label>
+            <input type="text" id="quick-expense-store" placeholder="Es. Conad, Bar..." autocomplete="off">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="quick-expense-tags">Tag personalizzati (opzionali)</label>
+          <input type="text" id="quick-expense-tags" placeholder="Es. urgente, rimborso, lavoro..." autocomplete="off">
+          <div id="quick-expense-tag-suggestions" class="tag-suggestions-row" aria-label="Tag suggeriti"></div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 8px;">
+          <button type="button" id="quick-expense-cancel-btn" class="btn-modal-cancel">Annulla</button>
+          <button type="submit" class="btn-modal-save">Salva Spesa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale di conferma in-app (evita window.confirm/alert bloccati negli iframe) -->
+  <div id="app-confirm-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="app-confirm-message" style="display: none;">
+    <div class="modal-box">
+      <p id="app-confirm-message" class="modal-message"></p>
+      <div class="modal-actions">
+        <button type="button" id="app-confirm-cancel" class="btn-modal-cancel">Annulla</button>
+        <button type="button" id="app-confirm-ok" class="btn-modal-confirm">Conferma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast di notifica -->
+  <div id="app-toast" class="app-toast" role="status" aria-live="polite"></div>
+
+  <script src="reports-chart.bundle.js?v=5.0"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>
